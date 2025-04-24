@@ -4,6 +4,7 @@ const connectDB = require("./config/db");
 const habitRoutes = require("./routes/habitRoutes");
 const partnerRoutes = require("./routes/partnerRoutes");
 const authRoutes = require('./routes/authroutes');
+const recommendationRoutes = require('./routes/recommendationRoute');
 require("dotenv").config();
 const PORT = process.env.PORT || 8000;
 
@@ -26,7 +27,7 @@ app.use("/api/habits", habitRoutes);
 app.use('/api/auth', authRoutes);
 
 app.use('/api/partners', partnerRoutes);
-
+app.use('/api/recommendations', recommendationRoutes);
 // Test route
 app.get('/', (req, res) => {
   res.send('Habitz API is running...');
