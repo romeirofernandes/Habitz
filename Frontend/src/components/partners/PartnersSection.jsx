@@ -1,0 +1,309 @@
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import axios from "axios";
+import { toast } from "react-toastify";
+import ChatWindow from "./ChatWindow";
+
+const PartnersSection = () => {
+  const currentUser = JSON.parse(localStorage.getItem("user")); // Add this line
+  const [partners, setPartners] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchPartners();
+    fetchPendingRequests();
+  }, []);
+
+  const fetchPendingRequests = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/partners/requests/pending`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setPendingRequests(response.data);
+    } catch (error) {
+      console.error("Failed to fetch pending requests:", error);
+    }
+  };
+
+  const handleAcceptRequest = async (requestId) => {
+    try {
+      await axios.post(
+        `${
+          import.meta.env.VITE_API_URL
+        }/api/partners/request/${requestId}/accept`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      toast.success("Partner request accepted!");
+      fetchPartners();
+      fetchPendingRequests();
+    } catch (error) {
+      toast.error("Failed to accept request");
+    }
+  };
+
+  const handleDeclineRequest = async (requestId) => {
+    try {
+      await axios.post(
+        `${
+          import.meta.env.VITE_API_URL
+        }/api/partners/request/${requestId}/decline`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      toast.success("Partner request declined");
+      fetchPendingRequests();
+    } catch (error) {
+      toast.error("Failed to decline request");
+    }
+  };
+
+  useEffect(() => {
+    fetchPartners();
+  }, []);
+
+  const fetchPartners = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/partners`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setPartners(response.data);
+    } catch (error) {
+      toast.error("Failed to fetch partners");
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchTerm) return;
+
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/partners/search`,
+        { query: searchTerm },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      // Filter out existing partners and pending requests
+      const filteredResults = response.data.filter((user) => {
+        const isPartner = partners.some(
+          (p) => p.user._id === user._id || p.partner._id === user._id
+        );
+        const hasPendingRequest = pendingRequests.some(
+          (r) => r.user._id === user._id || r.partner._id === user._id
+        );
+        return !isPartner && !hasPendingRequest;
+      });
+
+      setSearchResults(filteredResults);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Search failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update the sendPartnerRequest function
+  const sendPartnerRequest = async (userId) => {
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/partners/request`,
+        { partnerId: userId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      toast.success("Partner request sent!");
+      setSearchResults([]);
+      setSearchTerm("");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to send partner request"
+      );
+      console.error("Partner request error:", error);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Search Section */}
+      <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
+        <h3 className="text-xl font-bold mb-4">Find Partners</h3>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by username or email"
+            className="flex-1 px-4 py-2 bg-[#1a1a1a] border border-[#222] rounded-lg"
+          />
+          <motion.button
+            onClick={handleSearch}
+            className="bg-[#A2BFFE] text-[#080808] px-4 py-2 rounded-lg font-bold"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            disabled={loading}
+          >
+            {loading ? "Searching..." : "Search"}
+          </motion.button>
+        </div>
+
+        {/* Search Results */}
+        {searchResults.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {searchResults.map((user) => (
+              <div
+                key={user._id}
+                className="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-lg"
+              >
+                <div>
+                  <p className="font-medium">{user.username}</p>
+                  <p className="text-sm text-[#f5f5f7]/60">{user.email}</p>
+                </div>
+                <motion.button
+                  onClick={() => sendPartnerRequest(user._id)}
+                  className="text-sm bg-[#A2BFFE]/20 text-[#A2BFFE] px-3 py-1.5 rounded-md"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Add Partner
+                </motion.button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Pending Requests */}
+      {pendingRequests.length > 0 && (
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
+          <h3 className="text-xl font-bold mb-4">Pending Requests</h3>
+          <div className="space-y-3">
+            {pendingRequests.map((request) => (
+              <div
+                key={request._id}
+                className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg"
+              >
+                <div>
+                  <p className="font-medium">{request.user.username}</p>
+                  <p className="text-sm text-[#f5f5f7]/60">
+                    {request.user.email}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <motion.button
+                    onClick={() => handleAcceptRequest(request._id)}
+                    className="px-4 py-2 bg-[#A2BFFE] text-[#080808] rounded-md font-medium"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Accept
+                  </motion.button>
+                  <motion.button
+                    onClick={() => handleDeclineRequest(request._id)}
+                    className="px-4 py-2 bg-[#222] text-[#f5f5f7] rounded-md font-medium"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Decline
+                  </motion.button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Partners List */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-bold">Your Partners</h3>
+        {partners.length === 0 ? (
+          <p className="text-[#f5f5f7]/60">
+            No partners yet. Search to add some!
+          </p>
+        ) : (
+          partners.map((partnership) => (
+            <PartnerCard
+              key={partnership._id}
+              partner={
+                partnership.user._id === currentUser.id
+                  ? partnership.partner
+                  : partnership.user
+              }
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+const PartnerCard = ({ partner }) => {
+  const [showChat, setShowChat] = useState(false);
+  const currentUser = JSON.parse(localStorage.getItem("user")); // Add this line
+
+  // Ensure we're not displaying the current user
+  if (partner._id === currentUser.id) {
+    return null;
+  }
+
+  return (
+    <>
+      <motion.div
+        className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4"
+        whileHover={{ y: -2 }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="font-bold">{partner.username}</h4>
+            <p className="text-sm text-[#f5f5f7]/60">{partner.email}</p>
+          </div>
+          <motion.button
+            className="bg-[#A2BFFE]/20 text-[#A2BFFE] px-4 py-2 rounded-md text-sm"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowChat(true)}
+          >
+            Message
+          </motion.button>
+        </div>
+      </motion.div>
+      {showChat && (
+        <ChatWindow
+          partnerId={partner._id}
+          partnerName={partner.username}
+          onClose={() => setShowChat(false)}
+        />
+      )}
+    </>
+  );
+};
+
+export default PartnersSection;

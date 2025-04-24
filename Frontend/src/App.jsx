@@ -9,6 +9,7 @@ import RegisterPage from "./components/Auth/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Progress from "./pages/Progress";
 import Sidebar from "./components/Sidebar";
+import Partners from "./pages/Partners";
 import Achievements from "./pages/Acievements";
 
 function App() {
@@ -31,7 +32,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          
+
           {/* Protected routes with Sidebar */}
           <Route
             path="/dashboard"
@@ -49,6 +50,16 @@ function App() {
               <ProtectedRoute>
                 <Sidebar>
                   <Progress />
+                </Sidebar>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/partners"
+            element={
+              <ProtectedRoute>
+                <Sidebar>
+                  <Partners />
                 </Sidebar>
               </ProtectedRoute>
             }
