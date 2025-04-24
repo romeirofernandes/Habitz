@@ -8,6 +8,7 @@ import StreaksList from "../components/dashboard/StreaksList";
 import StatsCard from "../components/dashboard/StatsCard";
 import axios from "axios";
 import { toast } from "react-toastify";
+import StreakStaircase from "../components/dashboard/StreakStaircase";
 
 const Dashboard = () => {
   const [habits, setHabits] = useState([]);
@@ -116,14 +117,19 @@ const Dashboard = () => {
             title="Current Streak"
             value={`${stats.currentStreak} days`}
             icon="🔥"
+            isStreak={true}  
           />
           <StatsCard
             title="Completion Rate"
             value={`${stats.completionRate}%`}
             icon="📊"
           />
-          <StatsCard title="Total Habits" value={stats.totalHabits} icon="✨" />
-        </div>
+          <StatsCard 
+            title="Total Habits" 
+            value={stats.totalHabits} 
+            icon="✨" 
+          />
+          </div>
 
         {/* Error State */}
         {error && (
