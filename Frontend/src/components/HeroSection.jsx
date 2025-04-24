@@ -1,7 +1,17 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
+  const scrollToFeatures = () => {
+    const featuresSection = document.getElementById("features");
+    if (featuresSection) {
+      featuresSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Background Grid Pattern */}
@@ -70,6 +80,9 @@ const HeroSection = () => {
             className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 py-3 rounded-md font-bold"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              navigate("/login");
+            }}
           >
             Get Started
           </motion.button>
@@ -80,6 +93,7 @@ const HeroSection = () => {
               borderColor: "rgba(162, 191, 254, 0.5)",
             }}
             whileTap={{ scale: 0.95 }}
+            onClick={scrollToFeatures}
           >
             Learn More
           </motion.button>

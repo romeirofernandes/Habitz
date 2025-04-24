@@ -1,7 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = ({ isScrolled }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="fixed top-4 left-0 right-0 z-40 px-6">
       <motion.nav
@@ -21,17 +24,22 @@ const Navbar = ({ isScrolled }) => {
           </motion.div>
 
           <div className="flex items-center gap-4">
-            <motion.a
-              href="#"
+            <motion.button
               className="text-[#f5f5f7]/80 hover:text-[#A2BFFE] transition-colors"
               whileHover={{ scale: 1.05 }}
+              onClick={() => {
+                navigate("/login");
+              }}
             >
               Login
-            </motion.a>
+            </motion.button>
             <motion.button
               className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-4 py-2 rounded-full font-bold text-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                navigate("/register");
+              }}
             >
               Sign Up
             </motion.button>

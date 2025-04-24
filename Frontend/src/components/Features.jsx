@@ -30,7 +30,7 @@ const features = [
 
 const Features = () => {
   return (
-    <section id="features" className="py-20 relative">
+    <section id="features" className="py-30 relative">
       <div className="max-w-4xl mx-auto px-6">
         {/* ...existing motion.div... */}
 

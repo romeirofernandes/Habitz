@@ -1,7 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const CtaSection = () => {
+  const navigate = useNavigate();
   return (
     <section className="py-20">
       <motion.div
@@ -19,9 +21,12 @@ const CtaSection = () => {
           better habits.
         </p>
         <motion.button
-          className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-8 py-4 rounded-full font-medium text-lg"
+          className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-8 py-4 rounded-full font-bold text-lg"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            navigate("/register");
+          }}
         >
           Start Your Journey Today
         </motion.button>
