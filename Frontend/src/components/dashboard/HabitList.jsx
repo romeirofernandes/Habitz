@@ -1,32 +1,19 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import axios from "axios";
+import { toast } from "react-toastify";
 import ReactCanvasConfetti from "react-canvas-confetti";
 
 const HabitList = ({ habits, onHabitUpdate }) => {
   const [justCompleted, setJustCompleted] = useState(null);
-  
-  // Check if habits is an array and has items
+    // Check if habits is an array and has items
   const habitArray = Array.isArray(habits) ? habits : [];
 
-  const handleCheck = async (habitId) => {
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/habits/${habitId}/check`
-      );
-      if (!response.data.completedToday) {
-        setJustCompleted(habitId);
-        setTimeout(() => setJustCompleted(null), 2000);
-      }
-      onHabitUpdate();
-    } catch (error) {
-      console.error("Error checking habit:", error);
-    }
-  };
+  const confettiRef = useRef(null);
 
   const makeShot = useCallback((particleRatio, opts) => {
-    confetti({
+    confettiRef.current?.({
       ...opts,
       origin: { y: 0.7 },
       particleCount: Math.floor(200 * particleRatio),
@@ -62,74 +49,98 @@ const HabitList = ({ habits, onHabitUpdate }) => {
     });
   }, [makeShot]);
 
+  const handleCheck = async (habitId) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/habits/${habitId}/check`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.data.completedToday) {
+        setJustCompleted(habitId);
+        setTimeout(() => setJustCompleted(null), 2000);
+        fire();
+      }
+      onHabitUpdate();
+      toast.success("Habit completed! 🎉");
+    } catch (error) {
+      console.error("Error checking habit:", error);
+      toast.error("Failed to update habit");
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* Added a check for empty array */}
-      {habitArray.length === 0 ? (
-        <div className="text-center py-10 text-[#f5f5f7]/60">
-          <p>No habits found. Create a new habit to get started!</p>
-        </div>
-      ) : (
-        habitArray.map((habit) => (
-          <motion.div
-            key={habit._id}
-            className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 flex items-center justify-between"
-            whileHover={{ y: -2 }}
-          >
-            <div className="flex items-center gap-4">
-              <motion.button
-                onClick={() => {
-                  handleCheck(habit._id);
-                  if (!habit.completedToday) fire();
-                }}
-                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                  habit.completedToday
-                    ? "bg-[#A2BFFE] border-[#A2BFFE]"
-                    : "border-[#444] hover:border-[#A2BFFE]"
-                }`}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                {habit.completedToday && (
-                  <svg
-                    className="w-4 h-4 text-[#080808]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
-              </motion.button>
+      {habits.map((habit) => (
+        <motion.div
+          key={habit._id}
+          className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 flex items-center justify-between"
+          whileHover={{ y: -2 }}
+        >
+          <div className="flex items-center gap-4">
+            <motion.button
+              onClick={() => {
+                handleCheck(habit._id);
+                if (!habit.completedToday) fire();
+              }}
+              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                habit.completedToday
+                  ? "bg-[#A2BFFE] border-[#A2BFFE]"
+                  : "border-[#444] hover:border-[#A2BFFE]"
+              }`}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              {habit.completedToday && (
+                <svg
+                  className="w-4 h-4 text-[#080808]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </motion.button>
 
-              <div>
-                <h3
-                  className={`font-bold ${
-                    habit.completedToday ? "line-through text-[#f5f5f7]/40" : ""
-                  }`}
-                >
-                  {habit.name}
-                </h3>
-                <p
-                  className={`text-sm ${
-                    habit.completedToday
-                      ? "text-[#f5f5f7]/40"
-                      : "text-[#f5f5f7]/60"
-                  }`}
-                >
-                  {habit.frequency} •{" "}
-                  {format(new Date(`2000-01-01T${habit.timeOfDay}`), "h:mm a")}
-                </p>
-              </div>
+            <div>
+              <h3
+                className={`font-bold ${
+                  habit.completedToday ? "line-through text-[#f5f5f7]/40" : ""
+                }`}
+              >
+                {habit.name}
+              </h3>
+              <p
+                className={`text-sm ${
+                  habit.completedToday
+                    ? "text-[#f5f5f7]/40"
+                    : "text-[#f5f5f7]/60"
+                }`}
+              >
+                {habit.frequency} •{" "}
+                {format(new Date(`2000-01-01T${habit.timeOfDay}`), "h:mm a")}
+              </p>
             </div>
-          </motion.div>
-        ))
-      )}
+          </div>
+        </motion.div>
+      ))}
       <ReactCanvasConfetti
         style={{
           position: "fixed",
