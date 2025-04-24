@@ -1,35 +1,31 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
       const data = await response.json();
 
@@ -39,20 +35,24 @@ const Login = () => {
 
       // Store user data and token
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify({
-        id: data._id,
-        username: data.username,
-        email: data.email
-      }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: data._id,
+          username: data.username,
+          email: data.email,
+        })
+      );
 
-      toast.success("Login successful! 🎉");
-      
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1000);
+      toast.success("Welcome back! 🎉");
+
+      // Redirect to dashboard
+      setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error) {
-      toast.error(error.message || "Login failed. Please try again.");
+      toast.error(
+        error.message || "Login failed. Please check your credentials."
+      );
+      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
@@ -64,8 +64,8 @@ const Login = () => {
       <div className="absolute inset-0 z-0 opacity-10">
         <div className="h-full w-full grid grid-cols-[repeat(40,1fr)] grid-rows-[repeat(20,1fr)]">
           {[...Array(800)].map((_, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="w-0.5 h-0.5 rounded-full bg-[#A2BFFE]/20"
             ></div>
           ))}
@@ -94,7 +94,9 @@ const Login = () => {
               id="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               required
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#222] rounded-md focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50 focus:border-[#A2BFFE]/50 transition"
               placeholder="you@example.com"
@@ -112,7 +114,9 @@ const Login = () => {
               id="password"
               name="password"
               value={formData.password}
-              onChange={handleChange}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               required
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#222] rounded-md focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50 focus:border-[#A2BFFE]/50 transition"
               placeholder="••••••••"
@@ -126,9 +130,25 @@ const Login = () => {
             disabled={loading}
           >
             {loading ? (
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#080808]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#080808]"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
             ) : null}
             {loading ? "Logging In..." : "Login"}

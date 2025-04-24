@@ -1,29 +1,16 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import axios from "axios";
+import { toast } from "react-toastify";
 import ReactCanvasConfetti from "react-canvas-confetti";
 
 const HabitList = ({ habits, onHabitUpdate }) => {
   const [justCompleted, setJustCompleted] = useState(null);
-
-  const handleCheck = async (habitId) => {
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/habits/${habitId}/check`
-      );
-      if (!response.data.completedToday) {
-        setJustCompleted(habitId);
-        setTimeout(() => setJustCompleted(null), 2000);
-      }
-      onHabitUpdate();
-    } catch (error) {
-      console.error("Error checking habit:", error);
-    }
-  };
+  const confettiRef = useRef(null);
 
   const makeShot = useCallback((particleRatio, opts) => {
-    confetti({
+    confettiRef.current?.({
       ...opts,
       origin: { y: 0.7 },
       particleCount: Math.floor(200 * particleRatio),
@@ -59,27 +46,62 @@ const HabitList = ({ habits, onHabitUpdate }) => {
     });
   }, [makeShot]);
 
+  const handleCheck = async (habitId) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/habits/${habitId}/check`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.data.completedToday) {
+        setJustCompleted(habitId);
+        setTimeout(() => setJustCompleted(null), 2000);
+        fire();
+      }
+      onHabitUpdate();
+      toast.success("Habit completed! 🎉");
+    } catch (error) {
+      console.error("Error checking habit:", error);
+      toast.error("Failed to update habit");
+    }
+  };
+
   return (
     <div className="space-y-4">
       {habits.map((habit) => (
         <motion.div
           key={habit._id}
-          className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 flex items-center justify-between"
-          whileHover={{ y: -2 }}
+          className={`bg-[#0a0a0a] border border-[#222] rounded-xl p-4 flex items-center justify-between ${
+            habit.completedToday ? "opacity-75" : ""
+          }`}
+          whileHover={{ y: habit.completedToday ? 0 : -2 }}
         >
           <div className="flex items-center gap-4">
             <motion.button
               onClick={() => {
-                handleCheck(habit._id);
-                if (!habit.completedToday) fire();
+                if (!habit.completedToday) {
+                  handleCheck(habit._id);
+                }
               }}
               className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                 habit.completedToday
-                  ? "bg-[#A2BFFE] border-[#A2BFFE]"
-                  : "border-[#444] hover:border-[#A2BFFE]"
+                  ? "bg-[#A2BFFE] border-[#A2BFFE] cursor-not-allowed"
+                  : "border-[#444] hover:border-[#A2BFFE] cursor-pointer"
               }`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: habit.completedToday ? 1 : 1.1 }}
+              whileTap={{ scale: habit.completedToday ? 1 : 0.9 }}
+              disabled={habit.completedToday}
             >
               {habit.completedToday && (
                 <svg
@@ -118,19 +140,15 @@ const HabitList = ({ habits, onHabitUpdate }) => {
               </p>
             </div>
           </div>
+
+          <div className="text-sm text-[#f5f5f7]/60">
+            <span className="font-medium text-[#A2BFFE]">
+              {habit.currentStreak}
+            </span>{" "}
+            day streak
+          </div>
         </motion.div>
       ))}
-      <ReactCanvasConfetti
-        style={{
-          position: "fixed",
-          pointerEvents: "none",
-          width: "100%",
-          height: "100%",
-          top: 0,
-          left: 0,
-          zIndex: 50,
-        }}
-      />
     </div>
   );
 };
