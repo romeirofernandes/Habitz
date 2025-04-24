@@ -8,6 +8,7 @@ import LoginPage from "./components/Auth/Login";
 import RegisterPage from "./components/Auth/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Progress from "./pages/Progress";
+import Sidebar from "./components/Sidebar";
 
 function App() {
   return (
@@ -27,11 +28,17 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          
+          {/* Protected routes with Sidebar */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <Sidebar>
+                  <Dashboard />
+                </Sidebar>
               </ProtectedRoute>
             }
           />
@@ -39,12 +46,12 @@ function App() {
             path="/progress"
             element={
               <ProtectedRoute>
-                <Progress />
+                <Sidebar>
+                  <Progress />
+                </Sidebar>
               </ProtectedRoute>
             }
           />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
         </Routes>
       </BrowserRouter>
     </>

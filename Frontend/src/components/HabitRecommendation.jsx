@@ -1,0 +1,85 @@
+import React from "react";
+import { motion } from "framer-motion";
+
+const habitRecommendations = [
+  {
+    category: "health",
+    title: "Drink a glass of water",
+    recommendation: "We noticed you complete morning habits consistently. Adding water intake could boost your productivity.",
+    timeOfDay: "08:00",
+    icon: "💧"
+  },
+  {
+    category: "productivity",
+    title: "5-minute journal",
+    recommendation: "Your evening habit completion is strong. Consider a short journaling session to reflect on your day.",
+    timeOfDay: "21:00",
+    icon: "📝"
+  },
+  {
+    category: "self-care",
+    title: "2-minute meditation",
+    recommendation: "Start small with just 2 minutes of meditation to complement your morning routine.",
+    timeOfDay: "07:30",
+    icon: "🧘"
+  }
+];
+
+const HabitRecommendations = ({ onAddHabit }) => {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-xl font-bold text-[#f5f5f7]">Personalized Recommendations</h3>
+      <p className="text-[#f5f5f7]/60 mb-4">
+        Based on your habit patterns, here are some ideas that might work well for you:
+      </p>
+      
+      <div className="space-y-3">
+        {habitRecommendations.map((rec, index) => (
+          <motion.div
+            key={index}
+            className="bg-[#0a0a0a]/80 backdrop-blur-sm border border-[#A2BFFE]/10 rounded-xl p-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            whileHover={{ y: -2, borderColor: 'rgba(162, 191, 254, 0.3)' }}
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 flex items-center justify-center bg-[#A2BFFE]/10 rounded-full text-xl">
+                {rec.icon}
+              </div>
+              <div>
+                <h4 className="font-bold text-[#A2BFFE]">{rec.title}</h4>
+                <p className="text-sm text-[#f5f5f7]/60 mt-1">{rec.recommendation}</p>
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-xs text-[#f5f5f7]/40">Suggested time: {rec.timeOfDay}</span>
+                  <motion.button
+                    className="text-xs font-medium text-[#A2BFFE] hover:text-[#91AFFE] flex items-center gap-1"
+                    onClick={() => onAddHabit({
+                      name: rec.title,
+                      timeOfDay: rec.timeOfDay,
+                      category: rec.category
+                    })}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="h-3 w-3" 
+                      viewBox="0 0 20 20" 
+                      fill="currentColor"
+                    >
+                      <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    Add This Habit
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default HabitRecommendations;

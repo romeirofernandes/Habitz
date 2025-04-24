@@ -4,10 +4,10 @@ import axios from "axios";
 import { format, startOfWeek, eachDayOfInterval, addDays, subDays, isToday } from "date-fns";
 import { toast } from "react-toastify";
 import { Line, Bar } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend,Filler } from 'chart.js';
 
 // Register ChartJS components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend,Filler);
 
 
 const Progress = () => {
