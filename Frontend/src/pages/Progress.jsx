@@ -5,6 +5,8 @@ import { format, startOfWeek, eachDayOfInterval, addDays, subDays, isToday } fro
 import { toast } from "react-toastify";
 import { Line, Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend,Filler } from 'chart.js';
+import Achievements from "./Acievements";
+import ShareProgress from "../components/Progress.jsx/ShareProgress";
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend,Filler);
@@ -297,7 +299,6 @@ const Progress = () => {
             ))}
           </div>
         </div>
-
         {/* Insights Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <motion.div
@@ -369,6 +370,7 @@ const Progress = () => {
 </div>
         </div>
 
+          <ShareProgress stats={insights} />
         {/* Habits Performance */}
         <h2 className="text-xl font-bold mb-4">Individual Habit Performance</h2>
         <div className="space-y-4 mb-8">
@@ -415,7 +417,7 @@ const Progress = () => {
                       className={`w-full h-2 rounded-full ${
                         wasCompleted ? 'bg-[#A2BFFE]' : 'bg-[#222]'
                       }`}
-                    ></div>
+                      ></div>
                   );
                 })}
               </div>

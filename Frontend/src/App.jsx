@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Progress from "./pages/Progress";
 import Sidebar from "./components/Sidebar";
 import Partners from "./pages/Partners";
+import Achievements from "./pages/Acievements";
 
 function App() {
   return (
@@ -59,6 +60,16 @@ function App() {
               <ProtectedRoute>
                 <Sidebar>
                   <Partners />
+                </Sidebar>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/achievements"
+            element={
+              <ProtectedRoute>
+                <Sidebar>
+                  <Achievements />
                 </Sidebar>
               </ProtectedRoute>
             }
