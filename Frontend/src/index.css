@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "@fontsource/bricolage-grotesque";
+@import "@fontsource/inter";
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Bricolage Grotesque", sans-serif;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+}
+
+button {
+    cursor: pointer;
+}
