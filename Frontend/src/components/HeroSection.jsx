@@ -15,7 +15,7 @@ const HeroSection = () => {
             return (
               <motion.div
                 key={i}
-                className="w-0.5 h-0.5 rounded-full bg-[#A2BFFE]/20"
+                className="w-0.5 h-0.5 rounded-full bg-[#A2BFFE]/60"
                 style={{
                   gridColumn: col + 1,
                   gridRow: row + 1,
