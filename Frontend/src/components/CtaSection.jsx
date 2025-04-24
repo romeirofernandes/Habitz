@@ -25,9 +25,6 @@ const CtaSection = () => {
         >
           Start Your Journey Today
         </motion.button>
-        <p className="text-[#f5f5f7]/60 text-sm mt-4">
-          No credit card required • 14-day free trial
-        </p>
       </motion.div>
     </section>
   );

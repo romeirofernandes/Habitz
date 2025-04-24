@@ -20,19 +20,6 @@ const Navbar = ({ isScrolled }) => {
             <span className="text-xl font-bold">Habitz</span>
           </motion.div>
 
-          <div className="hidden md:flex items-center gap-8">
-            {["Features", "About"].map((item) => (
-              <motion.a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-[#f5f5f7]/80 hover:text-[#A2BFFE] transition-colors"
-                whileHover={{ y: -2 }}
-              >
-                {item}
-              </motion.a>
-            ))}
-          </div>
-
           <div className="flex items-center gap-4">
             <motion.a
               href="#"

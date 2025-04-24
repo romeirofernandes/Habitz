@@ -1,4 +1,27 @@
 const Habit = require("../models/habitSchema");
+const User = require("../models/user");
+const { scheduleReminders } = require("../services/reminderService");
+
+// Update the createHabit function
+exports.createHabit = async (req, res) => {
+  try {
+    const habit = new Habit({
+      ...req.body,
+      user: req.user.id,
+    });
+    await habit.save();
+
+    // Get user for email
+    const user = await User.findById(req.user.id);
+
+    // Schedule reminders
+    await scheduleReminders(habit, user);
+
+    res.status(201).json(habit);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
 
 // Get all habits for the current user
 exports.getHabits = async (req, res) => {
@@ -9,20 +32,6 @@ exports.getHabits = async (req, res) => {
     res.json(habits);
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-};
-
-// Create a new habit
-exports.createHabit = async (req, res) => {
-  try {
-    const habit = new Habit({
-      ...req.body,
-      user: req.user.id,
-    });
-    await habit.save();
-    res.status(201).json(habit);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
   }
 };
 
