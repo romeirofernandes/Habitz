@@ -37,6 +37,20 @@ const habitSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  reminderSettings: {
+    enabled: {
+      type: Boolean,
+      default: true,
+    },
+    reminderTime: {
+      type: Number, 
+      default: 15,
+    },
+    missedCheckEnabled: {
+      type: Boolean,
+      default: true,
+    },
+  },
 });
 
 habitSchema.virtual("completedToday").get(function () {
