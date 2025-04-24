@@ -6,6 +6,9 @@ import ReactCanvasConfetti from "react-canvas-confetti";
 
 const HabitList = ({ habits, onHabitUpdate }) => {
   const [justCompleted, setJustCompleted] = useState(null);
+  
+  // Check if habits is an array and has items
+  const habitArray = Array.isArray(habits) ? habits : [];
 
   const handleCheck = async (habitId) => {
     try {
@@ -61,65 +64,72 @@ const HabitList = ({ habits, onHabitUpdate }) => {
 
   return (
     <div className="space-y-4">
-      {habits.map((habit) => (
-        <motion.div
-          key={habit._id}
-          className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 flex items-center justify-between"
-          whileHover={{ y: -2 }}
-        >
-          <div className="flex items-center gap-4">
-            <motion.button
-              onClick={() => {
-                handleCheck(habit._id);
-                if (!habit.completedToday) fire();
-              }}
-              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                habit.completedToday
-                  ? "bg-[#A2BFFE] border-[#A2BFFE]"
-                  : "border-[#444] hover:border-[#A2BFFE]"
-              }`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              {habit.completedToday && (
-                <svg
-                  className="w-4 h-4 text-[#080808]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              )}
-            </motion.button>
-
-            <div>
-              <h3
-                className={`font-bold ${
-                  habit.completedToday ? "line-through text-[#f5f5f7]/40" : ""
-                }`}
-              >
-                {habit.name}
-              </h3>
-              <p
-                className={`text-sm ${
+      {/* Added a check for empty array */}
+      {habitArray.length === 0 ? (
+        <div className="text-center py-10 text-[#f5f5f7]/60">
+          <p>No habits found. Create a new habit to get started!</p>
+        </div>
+      ) : (
+        habitArray.map((habit) => (
+          <motion.div
+            key={habit._id}
+            className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 flex items-center justify-between"
+            whileHover={{ y: -2 }}
+          >
+            <div className="flex items-center gap-4">
+              <motion.button
+                onClick={() => {
+                  handleCheck(habit._id);
+                  if (!habit.completedToday) fire();
+                }}
+                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                   habit.completedToday
-                    ? "text-[#f5f5f7]/40"
-                    : "text-[#f5f5f7]/60"
+                    ? "bg-[#A2BFFE] border-[#A2BFFE]"
+                    : "border-[#444] hover:border-[#A2BFFE]"
                 }`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
               >
-                {habit.frequency} •{" "}
-                {format(new Date(`2000-01-01T${habit.timeOfDay}`), "h:mm a")}
-              </p>
+                {habit.completedToday && (
+                  <svg
+                    className="w-4 h-4 text-[#080808]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                )}
+              </motion.button>
+
+              <div>
+                <h3
+                  className={`font-bold ${
+                    habit.completedToday ? "line-through text-[#f5f5f7]/40" : ""
+                  }`}
+                >
+                  {habit.name}
+                </h3>
+                <p
+                  className={`text-sm ${
+                    habit.completedToday
+                      ? "text-[#f5f5f7]/40"
+                      : "text-[#f5f5f7]/60"
+                  }`}
+                >
+                  {habit.frequency} •{" "}
+                  {format(new Date(`2000-01-01T${habit.timeOfDay}`), "h:mm a")}
+                </p>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      ))}
+          </motion.div>
+        ))
+      )}
       <ReactCanvasConfetti
         style={{
           position: "fixed",
