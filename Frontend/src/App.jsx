@@ -9,6 +9,7 @@ import RegisterPage from "./components/Auth/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Progress from "./pages/Progress";
 import Sidebar from "./components/Sidebar";
+import Achievements from "./pages/Acievements";
 
 function App() {
   return (
@@ -48,6 +49,16 @@ function App() {
               <ProtectedRoute>
                 <Sidebar>
                   <Progress />
+                </Sidebar>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/achievements"
+            element={
+              <ProtectedRoute>
+                <Sidebar>
+                  <Achievements />
                 </Sidebar>
               </ProtectedRoute>
             }
