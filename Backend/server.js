@@ -2,11 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const habitRoutes = require("./routes/habitRoutes");
+const partnerRoutes = require("./routes/partnerRoutes");
+const authRoutes = require('./routes/authroutes');
 require("dotenv").config();
 const PORT = process.env.PORT || 8000;
-
-// Import route files
-const authRoutes = require('./routes/authroutes');
 
 const app = express();
 connectDB();
@@ -25,6 +24,8 @@ app.use("/api/habits", habitRoutes);
 
 // Mount routers
 app.use('/api/auth', authRoutes);
+
+app.use('/api/partners', partnerRoutes);
 
 // Test route
 app.get('/', (req, res) => {

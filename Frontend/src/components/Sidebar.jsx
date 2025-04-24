@@ -6,7 +6,7 @@ const Sidebar = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  
+
   const navItems = [
     {
       path: "/dashboard",
@@ -37,6 +37,20 @@ const Sidebar = ({ children }) => {
         </svg>
       ),
     },
+    {
+      path: "/partners",
+      name: "Partners",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+        </svg>
+      ),
+    },
   ];
 
   const logout = () => {
@@ -54,7 +68,7 @@ const Sidebar = ({ children }) => {
             Habitz
           </Link>
         </div>
-        
+
         <div className="flex-1 px-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -89,7 +103,7 @@ const Sidebar = ({ children }) => {
             </p>
             <p className="text-xs text-[#f5f5f7]/50">{user?.email}</p>
           </motion.div>
-          
+
           <motion.button
             className="flex items-center gap-3 px-3 py-3 rounded-lg w-full text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#222]/50"
             onClick={logout}
@@ -111,11 +125,9 @@ const Sidebar = ({ children }) => {
           </motion.button>
         </div>
       </div>
-      
+
       {/* Main content */}
-      <div className="flex-1 ml-16 md:ml-64">
-        {children}
-      </div>
+      <div className="flex-1 ml-16 md:ml-64">{children}</div>
     </div>
   );
 };
