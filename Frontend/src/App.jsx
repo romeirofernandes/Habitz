@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import LoginPage from "./components/Auth/Login";
 import RegisterPage from "./components/Auth/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Progress from "./pages/Progress";
 
 function App() {
   return (
@@ -31,6 +32,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/progress"
+            element={
+              <ProtectedRoute>
+                <Progress />
               </ProtectedRoute>
             }
           />
