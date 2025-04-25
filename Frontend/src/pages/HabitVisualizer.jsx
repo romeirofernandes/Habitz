@@ -671,19 +671,54 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
     ) : (
       <div className="space-y-4">
         {["30", "90", "365"].map((day) => (
-          <div key={day} className="border-b border-[#333] pb-3 mb-3">
-            <h3 className="font-bold text-[#A2BFFE] mb-1">
-              {day === "30" ? "30 Days" : day === "90" ? "90 Days" : "1 Year"}
-            </h3>
-            <pre className="whitespace-pre-wrap text-sm text-[#f5f5f7]/90">
-              {forecast?.[day]
-                ? typeof forecast[day] === "string"
-                  ? forecast[day]
-                  : JSON.stringify(forecast[day], null, 2)
-                : "No data."}
-            </pre>
+  <div key={day} className="border-b border-[#333] pb-3 mb-3">
+    <h3 className="font-bold text-[#A2BFFE] mb-1">
+      {day === "30" ? "30 Days" : day === "90" ? "90 Days" : "1 Year"}
+    </h3>
+    {forecast?.[day] && typeof forecast[day] === "object" ? (
+      <div className="space-y-3 text-sm text-[#f5f5f7]/90">
+        {forecast[day]["Summary of expected progress or changes"] && (
+          <div>
+            <h4 className="font-medium text-[#A2BFFE]/90">Progress & Changes</h4>
+            <p className="mt-1">{forecast[day]["Summary of expected progress or changes"]}</p>
+          </div>
+        )}
+        
+        {forecast[day]["Potential challenges"] && (
+          <div>
+            <h4 className="font-medium text-[#A2BFFE]/90">Challenges</h4>
+            <p className="mt-1">{forecast[day]["Potential challenges"]}</p>
+          </div>
+        )}
+        
+        {forecast[day]["Motivation tips"] && (
+          <div>
+            <h4 className="font-medium text-[#A2BFFE]/90">Motivation & Tips</h4>
+            <p className="mt-1">{forecast[day]["Motivation tips"]}</p>
+          </div>
+        )}
+        
+        {/* For any other properties we didn't explicitly handle */}
+        {Object.entries(forecast[day]).filter(([key]) => 
+          !["Summary of expected progress or changes", "Potential challenges", "Motivation tips"].includes(key)
+        ).map(([key, value]) => (
+          <div key={key}>
+            <h4 className="font-medium text-[#A2BFFE]/90">{key}</h4>
+            <p className="mt-1">{typeof value === "string" ? value : JSON.stringify(value)}</p>
           </div>
         ))}
+      </div>
+    ) : (
+      <pre className="whitespace-pre-wrap text-sm text-[#f5f5f7]/90">
+        {forecast?.[day]
+          ? typeof forecast[day] === "string"
+            ? forecast[day]
+            : JSON.stringify(forecast[day], null, 2)
+          : "No data."}
+      </pre>
+    )}
+  </div>
+))}
       </div>
     )}
   </section>
