@@ -1,16 +1,44 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
-import { format, startOfWeek, eachDayOfInterval, addDays, subDays, isToday } from "date-fns";
+import {
+  format,
+  startOfWeek,
+  eachDayOfInterval,
+  addDays,
+  subDays,
+  isToday,
+} from "date-fns";
 import { toast } from "react-toastify";
 import { Line, Bar } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend,Filler } from 'chart.js';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from "chart.js";
 import Achievements from "./Acievements";
-import ShareProgress from "../components/Progress.jsx/ShareProgress";
+import ShareProgress from "../components/Progress/ShareProgress";
+import ContributionGraph from "../components/Progress/ContributionGraph";
 
 // Register ChartJS components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend,Filler);
-
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const Progress = () => {
   const [habits, setHabits] = useState([]);
@@ -26,11 +54,11 @@ const Progress = () => {
   });
 
   const [viewMode, setViewMode] = useState("week"); // 'week', 'month', 'year'
-  
+
   useEffect(() => {
     fetchHabits();
   }, []);
-  
+
   useEffect(() => {
     if (habits.length > 0) {
       prepareWeeklyData();
@@ -62,7 +90,7 @@ const Progress = () => {
           },
         }
       );
-      
+
       setHabits(response.data);
       setError(null);
     } catch (error) {
@@ -76,36 +104,50 @@ const Progress = () => {
 
   const calculateInsights = () => {
     // Find longest streak
-    const longestStreak = Math.max(...habits.map(habit => habit.longestStreak || 0), 0);
-    
+    const longestStreak = Math.max(
+      ...habits.map((habit) => habit.longestStreak || 0),
+      0
+    );
+
     // Calculate total completed for all time
-    const totalCompleted = habits.reduce((total, habit) => total + (habit.completedDates?.length || 0), 0);
-    
+    const totalCompleted = habits.reduce(
+      (total, habit) => total + (habit.completedDates?.length || 0),
+      0
+    );
+
     // Calculate completion rate (completed / opportunities to complete)
     const totalOpportunities = habits.length * 7; // Simple approximation for the last week
     const completedThisWeek = habits.reduce((total, habit) => {
-      const recentCompletions = habit.completedDates?.filter(date => 
-        new Date(date) > subDays(new Date(), 7)
-      ).length || 0;
+      const recentCompletions =
+        habit.completedDates?.filter(
+          (date) => new Date(date) > subDays(new Date(), 7)
+        ).length || 0;
       return total + recentCompletions;
     }, 0);
-    
-    const completionRate = totalOpportunities ? Math.round((completedThisWeek / totalOpportunities) * 100) : 0;
-    
+
+    const completionRate = totalOpportunities
+      ? Math.round((completedThisWeek / totalOpportunities) * 100)
+      : 0;
+
     // Basic time-of-day analysis based on habit.timeOfDay
-    const timeOfDayMap = habits.reduce((acc, habit) => {
-      if (habit.timeOfDay) {
-        const hour = parseInt(habit.timeOfDay.split(":")[0]);
-        if (hour < 12) acc.morning++;
-        else if (hour < 18) acc.afternoon++;
-        else acc.evening++;
-      }
-      return acc;
-    }, { morning: 0, afternoon: 0, evening: 0 });
-    
-    const mostProductiveTime = Object.keys(timeOfDayMap).reduce((a, b) => 
-      timeOfDayMap[a] > timeOfDayMap[b] ? a : b, 'morning');
-    
+    const timeOfDayMap = habits.reduce(
+      (acc, habit) => {
+        if (habit.timeOfDay) {
+          const hour = parseInt(habit.timeOfDay.split(":")[0]);
+          if (hour < 12) acc.morning++;
+          else if (hour < 18) acc.afternoon++;
+          else acc.evening++;
+        }
+        return acc;
+      },
+      { morning: 0, afternoon: 0, evening: 0 }
+    );
+
+    const mostProductiveTime = Object.keys(timeOfDayMap).reduce(
+      (a, b) => (timeOfDayMap[a] > timeOfDayMap[b] ? a : b),
+      "morning"
+    );
+
     // Determine most productive day (this requires more data than we might have, so it's a placeholder)
     const mostProductiveDay = "Monday"; // Would normally calculate this from completedDates
 
@@ -114,14 +156,16 @@ const Progress = () => {
       totalCompleted,
       completionRate,
       mostProductiveDay,
-      mostProductiveTime: mostProductiveTime.charAt(0).toUpperCase() + mostProductiveTime.slice(1),
+      mostProductiveTime:
+        mostProductiveTime.charAt(0).toUpperCase() +
+        mostProductiveTime.slice(1),
     });
   };
 
   const prepareWeeklyData = () => {
     const today = new Date();
     let startDay, endDay, days;
-  
+
     // Define date ranges based on viewMode
     switch (viewMode) {
       case "month":
@@ -141,67 +185,67 @@ const Progress = () => {
         endDay = addDays(startDay, 6);
         break;
     }
-    
+
     // Generate array of days in the selected range
     days = eachDayOfInterval({ start: startDay, end: endDay });
-    
+
     // Rest of your data preparation logic remains the same
-    const data = days.map(day => {
-      const dateStr = format(day, 'yyyy-MM-dd');
-      
+    const data = days.map((day) => {
+      const dateStr = format(day, "yyyy-MM-dd");
+
       // Count completed habits for this day
       const completed = habits.reduce((count, habit) => {
-        const wasCompletedOnDay = habit.completedDates?.some(date => {
+        const wasCompletedOnDay = habit.completedDates?.some((date) => {
           const completedDate = new Date(date);
-          return format(completedDate, 'yyyy-MM-dd') === dateStr;
+          return format(completedDate, "yyyy-MM-dd") === dateStr;
         });
         return wasCompletedOnDay ? count + 1 : count;
       }, 0);
-      
+
       // Total habits that existed on this day (simplified)
       const total = habits.length;
-      
+
       return {
         date: dateStr,
-        day: format(day, viewMode === "week" ? 'EEE' : 'MMM dd'), // Different format for month/all
+        day: format(day, viewMode === "week" ? "EEE" : "MMM dd"), // Different format for month/all
         completed,
         missed: total - completed,
         percentage: total ? Math.round((completed / total) * 100) : 0,
         isToday: isToday(day),
       };
     });
-    
+
     setWeeklyData(data);
   };
 
   const barChartData = {
-    labels: weeklyData.map(d => d.day),
+    labels: weeklyData.map((d) => d.day),
     datasets: [
       {
-        label: 'Completed',
-        data: weeklyData.map(d => d.completed),
-        backgroundColor: 'rgba(162, 191, 254, 0.8)',
-        borderColor: '#A2BFFE',
+        label: "Completed",
+        data: weeklyData.map((d) => d.completed),
+        backgroundColor: "rgba(162, 191, 254, 0.8)",
+        borderColor: "#A2BFFE",
         borderWidth: 1,
       },
       {
-        label: 'Missed',
-        data: weeklyData.map(d => d.missed),
-        backgroundColor: 'rgba(255, 99, 132, 0.4)',
-        borderColor: 'rgba(255, 99, 132, 0.6)',
+        label: "Missed",
+        data: weeklyData.map((d) => d.missed),
+        backgroundColor: "rgba(255, 99, 132, 0.4)",
+        borderColor: "rgba(255, 99, 132, 0.6)",
         borderWidth: 1,
       },
     ],
   };
 
   const lineChartData = {
-    labels: weeklyData.map(d => d.day),
+    labels: weeklyData.map((d) => d.day),
     datasets: [
       {
-        label: 'Completion Rate (%)',
-        data: weeklyData.map(d => d.percentage),
-        backgroundColor: 'rgba(162, 191, 254, 0.2)',
-        borderColor: '#A2BFFE',
+        label: "Completion Rate (%)",
+        data: weeklyData.map((d) => d.percentage),
+        backgroundColor: "rgba(162, 191, 254, 0.2)",
+        borderColor: "#A2BFFE",
         borderWidth: 2,
         fill: true,
         tension: 0.4,
@@ -214,54 +258,54 @@ const Progress = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top',
+        position: "top",
         labels: {
-          color: 'rgba(245, 245, 247, 0.8)',
+          color: "rgba(245, 245, 247, 0.8)",
           font: {
-            family: 'Inter, sans-serif',
-          }
-        }
+            family: "Inter, sans-serif",
+          },
+        },
       },
       title: {
-        display: false
+        display: false,
       },
       tooltip: {
-        backgroundColor: '#0a0a0a',
-        titleColor: '#f5f5f7',
-        bodyColor: '#f5f5f7',
+        backgroundColor: "#0a0a0a",
+        titleColor: "#f5f5f7",
+        bodyColor: "#f5f5f7",
         titleFont: {
-          family: 'Bricolage Grotesque, sans-serif',
-          size: 14
+          family: "Bricolage Grotesque, sans-serif",
+          size: 14,
         },
         bodyFont: {
-          family: 'Inter, sans-serif',
-          size: 12
+          family: "Inter, sans-serif",
+          size: 12,
         },
         padding: 12,
         cornerRadius: 8,
         displayColors: true,
-        borderColor: '#A2BFFE',
-        borderWidth: 1
-      }
+        borderColor: "#A2BFFE",
+        borderWidth: 1,
+      },
     },
     scales: {
       x: {
         grid: {
-          color: 'rgba(255, 255, 255, 0.05)'
+          color: "rgba(255, 255, 255, 0.05)",
         },
         ticks: {
-          color: 'rgba(245, 245, 247, 0.6)'
-        }
+          color: "rgba(245, 245, 247, 0.6)",
+        },
       },
       y: {
         grid: {
-          color: 'rgba(255, 255, 255, 0.05)'
+          color: "rgba(255, 255, 255, 0.05)",
         },
         ticks: {
-          color: 'rgba(245, 245, 247, 0.6)'
-        }
-      }
-    }
+          color: "rgba(245, 245, 247, 0.6)",
+        },
+      },
+    },
   };
 
   if (loading) {
@@ -282,15 +326,15 @@ const Progress = () => {
               Track your habit consistency and identify patterns
             </p>
           </div>
-          
+
           <div className="flex gap-2 bg-[#0a0a0a] border border-[#222] rounded-full">
-            {["week", "month", "all"].map(mode => (
+            {["week", "month", "all"].map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={`px-4 py-2 text-sm font-medium rounded-full ${
-                  viewMode === mode 
-                    ? "bg-[#A2BFFE] text-[#080808]" 
+                  viewMode === mode
+                    ? "bg-[#A2BFFE] text-[#080808]"
                     : "text-[#f5f5f7]/60 hover:text-[#f5f5f7]"
                 }`}
               >
@@ -305,33 +349,47 @@ const Progress = () => {
             className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4"
             whileHover={{ y: -2 }}
           >
-            <h3 className="font-medium text-[#f5f5f7]/60 mb-1 text-sm">Longest Streak</h3>
+            <h3 className="font-medium text-[#f5f5f7]/60 mb-1 text-sm">
+              Longest Streak
+            </h3>
             <p className="text-2xl font-bold">{insights.longestStreak} days</p>
           </motion.div>
-          
+
           <motion.div
             className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4"
             whileHover={{ y: -2 }}
           >
-            <h3 className="font-medium text-[#f5f5f7]/60 mb-1 text-sm">Completion Rate</h3>
+            <h3 className="font-medium text-[#f5f5f7]/60 mb-1 text-sm">
+              Completion Rate
+            </h3>
             <p className="text-2xl font-bold">{insights.completionRate}%</p>
           </motion.div>
-          
+
           <motion.div
             className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4"
             whileHover={{ y: -2 }}
           >
-            <h3 className="font-medium text-[#f5f5f7]/60 mb-1 text-sm">Most Productive Time</h3>
+            <h3 className="font-medium text-[#f5f5f7]/60 mb-1 text-sm">
+              Most Productive Time
+            </h3>
             <p className="text-2xl font-bold">{insights.mostProductiveTime}</p>
           </motion.div>
-          
+
           <motion.div
             className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4"
             whileHover={{ y: -2 }}
           >
-            <h3 className="font-medium text-[#f5f5f7]/60 mb-1 text-sm">Total Completions</h3>
+            <h3 className="font-medium text-[#f5f5f7]/60 mb-1 text-sm">
+              Total Completions
+            </h3>
             <p className="text-2xl font-bold">{insights.totalCompleted}</p>
           </motion.div>
+        </div>
+
+        {/* Add this after the insights cards and before Weekly Summary */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4">Activity Overview</h2>
+          <ContributionGraph habits={habits} />
         </div>
 
         {/* Weekly Summary */}
@@ -339,38 +397,52 @@ const Progress = () => {
         <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6 mb-8">
           <div className="flex flex-col md:flex-row justify-between mb-6 gap-6">
             <div className="w-full md:w-1/2">
-              <h3 className="font-medium text-[#A2BFFE] mb-4">Daily Completion</h3>
+              <h3 className="font-medium text-[#A2BFFE] mb-4">
+                Daily Completion
+              </h3>
               <div className="h-[250px]">
                 <Bar data={barChartData} options={chartOptions} />
               </div>
             </div>
             <div className="w-full md:w-1/2">
-              <h3 className="font-medium text-[#A2BFFE] mb-4">Completion Rate</h3>
+              <h3 className="font-medium text-[#A2BFFE] mb-4">
+                Completion Rate
+              </h3>
               <div className="h-[250px]">
                 <Line data={lineChartData} options={chartOptions} />
               </div>
             </div>
           </div>
-          
-          <div className={`grid ${viewMode === "week" ? "grid-cols-7" : "grid-cols-10 overflow-x-auto"} gap-2`}>
-  {weeklyData.map((day, index) => (
-    <div 
-      key={index} 
-      className={`p-3 rounded-lg text-center ${
-        day.isToday ? 'border border-[#A2BFFE]/50' : 'border border-[#222]'
-      }`}
-    >
-      <p className="text-sm font-medium text-[#f5f5f7]/80">{day.day}</p>
-      <div className="my-2 font-bold text-lg">{day.percentage}%</div>
-      <p className="text-xs text-[#f5f5f7]/60">
-        {day.completed}/{day.completed + day.missed} habits
-      </p>
-    </div>
-  ))}
-</div>
+
+          <div
+            className={`grid ${
+              viewMode === "week"
+                ? "grid-cols-7"
+                : "grid-cols-10 overflow-x-auto"
+            } gap-2`}
+          >
+            {weeklyData.map((day, index) => (
+              <div
+                key={index}
+                className={`p-3 rounded-lg text-center ${
+                  day.isToday
+                    ? "border border-[#A2BFFE]/50"
+                    : "border border-[#222]"
+                }`}
+              >
+                <p className="text-sm font-medium text-[#f5f5f7]/80">
+                  {day.day}
+                </p>
+                <div className="my-2 font-bold text-lg">{day.percentage}%</div>
+                <p className="text-xs text-[#f5f5f7]/60">
+                  {day.completed}/{day.completed + day.missed} habits
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
-          <ShareProgress stats={insights} />
+        <ShareProgress stats={insights} />
         {/* Habits Performance */}
         <h2 className="text-xl font-bold mb-4">Individual Habit Performance</h2>
         <div className="space-y-4 mb-8">
@@ -384,11 +456,17 @@ const Progress = () => {
                 <div>
                   <h3 className="font-bold">{habit.name}</h3>
                   <div className="flex gap-2 mt-1">
-                    <span className="text-sm text-[#f5f5f7]/60">Current streak: 
-                      <span className="text-[#A2BFFE] ml-1">{habit.currentStreak} days</span>
+                    <span className="text-sm text-[#f5f5f7]/60">
+                      Current streak:
+                      <span className="text-[#A2BFFE] ml-1">
+                        {habit.currentStreak} days
+                      </span>
                     </span>
-                    <span className="text-sm text-[#f5f5f7]/60">| Best: 
-                      <span className="text-[#A2BFFE] ml-1">{habit.longestStreak} days</span>
+                    <span className="text-sm text-[#f5f5f7]/60">
+                      | Best:
+                      <span className="text-[#A2BFFE] ml-1">
+                        {habit.longestStreak} days
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -399,27 +477,34 @@ const Progress = () => {
                   <p className="text-xs text-[#f5f5f7]/60">total completions</p>
                 </div>
               </div>
-              
+
               {/* Small 7-day streak visualization */}
               <div className="flex gap-1 mt-3">
-                {Array(7).fill(0).map((_, idx) => {
-                  // Check if habit was completed each of the last 7 days
-                  const date = subDays(new Date(), 6 - idx);
-                  const dateStr = format(date, 'yyyy-MM-dd');
-                  
-                  const wasCompleted = habit.completedDates?.some(completedDate => {
-                    return format(new Date(completedDate), 'yyyy-MM-dd') === dateStr;
-                  });
-                  
-                  return (
-                    <div 
-                      key={idx} 
-                      className={`w-full h-2 rounded-full ${
-                        wasCompleted ? 'bg-[#A2BFFE]' : 'bg-[#222]'
-                      }`}
+                {Array(7)
+                  .fill(0)
+                  .map((_, idx) => {
+                    // Check if habit was completed each of the last 7 days
+                    const date = subDays(new Date(), 6 - idx);
+                    const dateStr = format(date, "yyyy-MM-dd");
+
+                    const wasCompleted = habit.completedDates?.some(
+                      (completedDate) => {
+                        return (
+                          format(new Date(completedDate), "yyyy-MM-dd") ===
+                          dateStr
+                        );
+                      }
+                    );
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`w-full h-2 rounded-full ${
+                          wasCompleted ? "bg-[#A2BFFE]" : "bg-[#222]"
+                        }`}
                       ></div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </motion.div>
           ))}
