@@ -28,10 +28,14 @@ const notifyPartnerForMissedHabit = async (userId, habitName) => {
         });
       }
 
-      // Add system message about missed habit
+      const user =
+        partnership.user._id.toString() === userId
+          ? partnership.user
+          : partnership.partner;
+
       const newMessage = {
-        sender: partnerId, // Make it appear as from partner
-        content: `👀 Your accountability partner missed their habit: ${habitName}`,
+        sender: userId, // Change to send from the user who missed the habit
+        content: `👀 ${user.username} missed their habit: ${habitName}`,
         isSystemMessage: true,
         createdAt: new Date(),
         readBy: [partnerId],

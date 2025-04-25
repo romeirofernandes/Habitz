@@ -38,8 +38,7 @@ exports.getHabits = async (req, res) => {
   }
 };
 
-// Check/complete a habit
-exports.checkHabit = async (req, res) => {
+exports.completeHabit = async (req, res) => {
   try {
     const habit = await Habit.findById(req.params.id);
 
@@ -47,34 +46,36 @@ exports.checkHabit = async (req, res) => {
       return res.status(404).json({ message: "Habit not found" });
     }
 
-    // Check if habit was completed in last 30 seconds
-    const now = new Date();
-    const thirtySecondsAgo = new Date(now - 30000); // 30 seconds in milliseconds
-
-    const wasCompletedRecently = habit.completedDates.some((date) => {
-      const completedDate = new Date(date);
-      return completedDate >= thirtySecondsAgo;
-    });
-
-    // Check if habit was completed in previous 30 seconds
-    const sixtySecondsAgo = new Date(now - 60000);
-    const wasCompletedPreviously = habit.completedDates.some((date) => {
-      const completedDate = new Date(date);
-      return (
-        completedDate >= sixtySecondsAgo && completedDate < thirtySecondsAgo
-      );
-    });
-
-    // If habit was missed and had a streak
-    if (
-      !wasCompletedRecently &&
-      !wasCompletedPreviously &&
-      habit.currentStreak > 0
-    ) {
-      await notifyPartnerForMissedHabit(req.user.id, habit.name);
+    if (habit.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
-    // ... rest of your existing code
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Check if already completed today
+    const completedToday = habit.completedDates.some((date) => {
+      const completedDate = new Date(date);
+      return completedDate.toDateString() === today.toDateString();
+    });
+
+    if (completedToday) {
+      return res.status(400).json({
+        message: "Habit already completed today",
+        completedToday: true,
+      });
+    }
+
+    // Add completion and update streak
+    habit.completedDates.push(today);
+    habit.currentStreak += 1;
+    habit.longestStreak = Math.max(habit.longestStreak, habit.currentStreak);
+    await habit.save();
+
+    res.json({
+      ...habit.toObject(),
+      completedToday: true,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

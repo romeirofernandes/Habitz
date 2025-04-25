@@ -7,7 +7,6 @@ import ReactCanvasConfetti from "react-canvas-confetti";
 
 const HabitList = ({ habits, onHabitUpdate }) => {
   const [justCompleted, setJustCompleted] = useState(null);
-    // Check if habits is an array and has items
   const habitArray = Array.isArray(habits) ? habits : [];
 
   const confettiRef = useRef(null);
@@ -50,102 +49,119 @@ const HabitList = ({ habits, onHabitUpdate }) => {
   }, [makeShot]);
 
   const handleCheck = async (habitId) => {
+    const habit = habits.find((h) => h._id === habitId);
+
+    // Prevent checking if already completed today
+    if (habit.completedToday) {
+      toast.info("You've already completed this habit today!");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("Authentication token not found");
-      }
+      if (!token) throw new Error("Authentication token not found");
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/habits/${habitId}/check`,
+        `${import.meta.env.VITE_API_URL}/api/habits/${habitId}/complete`,
         {},
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (!response.data.completedToday) {
+      if (response.data.completedToday) {
+        // Trigger confetti and visual feedback
+        fire();
         setJustCompleted(habitId);
         setTimeout(() => setJustCompleted(null), 2000);
-        fire();
+
+        // Update parent component state
+        onHabitUpdate();
+        toast.success("Habit completed! 🎉");
       }
-      onHabitUpdate();
-      toast.success("Habit completed! 🎉");
     } catch (error) {
-      console.error("Error checking habit:", error);
-      toast.error("Failed to update habit");
+      console.error("Error completing habit:", error);
+      if (error.response?.status === 400) {
+        // Handle already completed case
+        toast.info("This habit was already completed today!");
+        // Force refresh to sync with server state
+        onHabitUpdate();
+      } else {
+        toast.error("Failed to update habit");
+      }
     }
   };
 
+  // Sort habits to show incomplete ones first and maintain stable order
+  const sortedHabits = [...habitArray].sort((a, b) => {
+    if (a.completedToday === b.completedToday) {
+      // Secondary sort by time of day if both have same completion status
+      return a.timeOfDay.localeCompare(b.timeOfDay);
+    }
+    return a.completedToday ? 1 : -1;
+  });
+
   return (
     <div className="space-y-4">
-      {/* Added a check for empty array */}
-      {habitArray.length === 0 ? (
-        <div className="text-center py-10 text-[#f5f5f7]/60">
-          <p>No habits found. Create a new habit to get started!</p>
-        </div>
-      ) : (
-        habitArray.map((habit) => (
-          <motion.div
-            key={habit._id}
-            className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 flex items-center justify-between"
-            whileHover={{ y: -2 }}
-          >
-            <div className="flex items-center gap-4">
-              <motion.button
-                onClick={() => {
-                  handleCheck(habit._id);
-                  if (!habit.completedToday) fire();
-                }}
-                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+      {sortedHabits.map((habit) => (
+        <motion.div
+          key={habit._id}
+          className={`bg-[#0a0a0a] border ${
+            habit.completedToday ? "border-[#222] opacity-75" : "border-[#222]"
+          } rounded-xl p-4 flex items-center justify-between transition-all duration-200`}
+          whileHover={{ y: habit.completedToday ? 0 : -2 }}
+        >
+          <div className="flex items-center gap-4">
+            <motion.button
+              onClick={() => handleCheck(habit._id)}
+              disabled={habit.completedToday}
+              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
+                ${
                   habit.completedToday
-                    ? "bg-[#A2BFFE] border-[#A2BFFE]"
-                    : "border-[#444] hover:border-[#A2BFFE]"
+                    ? "bg-[#A2BFFE] border-[#A2BFFE] cursor-not-allowed"
+                    : "border-[#444] hover:border-[#A2BFFE] cursor-pointer"
                 }`}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                {habit.completedToday && (
-                  <svg
-                    className="w-4 h-4 text-[#080808]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
-              </motion.button>
+              whileHover={habit.completedToday ? {} : { scale: 1.1 }}
+              whileTap={habit.completedToday ? {} : { scale: 0.9 }}
+            >
+              {habit.completedToday && (
+                <svg
+                  className="w-4 h-4 text-[#080808]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </motion.button>
 
-              <div>
-                <h3
-                  className={`font-bold ${
-                    habit.completedToday ? "line-through text-[#f5f5f7]/40" : ""
-                  }`}
-                >
-                  {habit.name}
-                </h3>
-                <p
-                  className={`text-sm ${
-                    habit.completedToday
-                      ? "text-[#f5f5f7]/40"
-                      : "text-[#f5f5f7]/60"
-                  }`}
-                >
-                  {habit.frequency} •{" "}
-                  {format(new Date(`2000-01-01T${habit.timeOfDay}`), "h:mm a")}
-                </p>
-              </div>
+            <div>
+              <h3
+                className={`font-bold ${
+                  habit.completedToday ? "line-through text-[#f5f5f7]/40" : ""
+                }`}
+              >
+                {habit.name}
+              </h3>
+              <p
+                className={`text-sm ${
+                  habit.completedToday
+                    ? "text-[#f5f5f7]/40"
+                    : "text-[#f5f5f7]/60"
+                }`}
+              >
+                {habit.frequency} •{" "}
+                {format(new Date(`2000-01-01T${habit.timeOfDay}`), "h:mm a")}
+              </p>
             </div>
-  
+          </div>
+
           <div className="text-sm text-[#f5f5f7]/60">
             <span className="font-medium text-[#A2BFFE]">
               {habit.currentStreak}
@@ -153,8 +169,21 @@ const HabitList = ({ habits, onHabitUpdate }) => {
             day streak
           </div>
         </motion.div>
-        ))
-      )}
+      ))}
+
+      {/* Confetti effect */}
+      <ReactCanvasConfetti
+        ref={confettiRef}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+          zIndex: 999,
+        }}
+      />
     </div>
   );
 };

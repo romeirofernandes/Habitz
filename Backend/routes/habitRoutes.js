@@ -8,6 +8,6 @@ router.use(auth);
 
 router.get("/", habitController.getHabits);
 router.post("/", habitController.createHabit);
-router.post("/:id/check", habitController.checkHabit);
+router.post("/:id/complete", auth, habitController.completeHabit);
 
 module.exports = router;
