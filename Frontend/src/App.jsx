@@ -13,6 +13,7 @@ import Partners from "./pages/Partners";
 import Achievements from "./pages/Acievements";
 import UserProfile from "./components/dashboard/Profile";
 import HabitVisualizer from "./pages/HabitVisualizer";
+import Challenges from "./pages/Challenges";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -84,6 +85,16 @@ function App() {
                   userId={userId}
                   isOwnProfile={true}
                 />
+              </Sidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/challenges"
+          element={
+            <ProtectedRoute>
+              <Sidebar>
+                <Challenges />
               </Sidebar>
             </ProtectedRoute>
           }

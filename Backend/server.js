@@ -10,6 +10,8 @@ const Chat = require("./models/chat"); // Add this
 const recommendationRoutes = require('./routes/recommendationRoute');
 const visualizerRoutes = require('./routes/visualizerRoutes');
 const forecastRoutes = require('./routes/forecastRoutes');
+const challengeRoutes = require('./routes/challengeRoutes');
+const { initWebsocket } = require('./services/websocket');
 require("dotenv").config();
 
 const PORT = process.env.PORT || 8000;
@@ -17,6 +19,8 @@ const PORT = process.env.PORT || 8000;
 const app = express();
 const httpServer = createServer(app);
 
+// Initialize WebSocket with our HTTP server
+initWebsocket(httpServer);
 // Initialize Socket.IO
 const io = socketIo(httpServer, {
   cors: {
@@ -120,6 +124,7 @@ app.get("/", (req, res) => {
 });
 app.use('/api/visualizer', visualizerRoutes);
 app.use('/api/forecast', forecastRoutes);
+app.use('/api/challenges', challengeRoutes);
 
 // Change app.listen to httpServer.listen
 httpServer.listen(PORT, () => {
