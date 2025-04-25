@@ -11,6 +11,7 @@ const Challenges = () => {
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false); // Add this state
   const [customProgressValues, setCustomProgressValues] = useState({}); // Add this state for tracking individual progress inputs
   const [progressErrors, setProgressErrors] = useState({}); // Add state to track validation errors
   const [selectedChallengeId, setSelectedChallengeId] = useState(""); // Added missing state for selected challenge
@@ -277,9 +278,9 @@ socket.onmessage = (event) => {
           </motion.button>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - Only showing main tabs */}
         <div className="flex gap-4 mb-6 border-b border-[#222]">
-          {["explore", "my-challenges", "live-updates","participants"].map((tab) => (
+          {["explore", "my-challenges", "live-updates"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -293,9 +294,7 @@ socket.onmessage = (event) => {
                 ? "Explore" 
                 : tab === "my-challenges" 
                   ? "My Challenges" 
-                  : tab === "participants"
-                    ? "Participants"
-                    : "Live Updates"}
+                  : "Live Updates"}
               {activeTab === tab && (
                 <motion.div
                   layoutId="activeTab"
@@ -350,9 +349,15 @@ socket.onmessage = (event) => {
                         <span className="text-xs bg-[#222] px-2 py-1 rounded-full text-[#f5f5f7]/60">
                           {new Date(challenge.startDate).toLocaleDateString()} to {new Date(challenge.endDate).toLocaleDateString()}
                         </span>
-                        <span className="text-xs bg-[#222] px-2 py-1 rounded-full text-[#f5f5f7]/60">
-                          {challenge.participants.length} participants
-                        </span>
+                        <button 
+                          className="text-xs bg-[#222] px-2 py-1 rounded-full text-[#f5f5f7]/60 cursor-pointer hover:bg-[#333] flex items-center"
+                          onClick={() => {
+                            setSelectedChallengeId(challenge._id);
+                            setActiveTab("participants");
+                          }}
+                        >
+                          <span className="mr-1">👥</span> {challenge.participants.length} participants
+                        </button>
                       </div>
                       
                       {isParticipant ? (
@@ -550,46 +555,6 @@ socket.onmessage = (event) => {
               )}
             </motion.div>
           )}
-            {activeTab === "participants" && (
-  <motion.div
-    key="participants"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
-    transition={{ duration: 0.2 }}
-  >
-    {/* Challenge Selector */}
-    <div className="mb-6">
-      <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
-        Select Challenge
-      </label>
-      <select
-        value={selectedChallengeId || ""}
-        onChange={(e) => setSelectedChallengeId(e.target.value)}
-        className="w-full px-4 py-2.5 bg-[#111] border border-[#222] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50"
-      >
-        <option value="">Select a challenge</option>
-        {challenges.map((challenge) => (
-          <option key={challenge._id} value={challenge._id}>
-            {challenge.name}
-          </option>
-        ))}
-      </select>
-    </div>
-
-    {selectedChallengeId ? (
-      <ParticipantsList challengeId={selectedChallengeId} challenges={challenges} />
-    ) : (
-      <div className="text-center py-12 bg-[#0a0a0a] border border-[#222] rounded-xl">
-        <div className="text-4xl mb-4">👥</div>
-        <h3 className="text-xl font-bold mb-2">Select a Challenge</h3>
-        <p className="text-[#f5f5f7]/60">
-          Choose a challenge from the dropdown to see all participants
-        </p>
-      </div>
-    )}
-  </motion.div>
-)}
           {activeTab === "live-updates" && (
             <motion.div
               key="live-updates"
@@ -628,6 +593,41 @@ socket.onmessage = (event) => {
                   ))}
                 </div>
               )}
+            </motion.div>
+          )}
+          
+          {/* Participants View Tab - Hidden from tab bar but accessible */}
+          {activeTab === "participants" && (
+            <motion.div
+              key="participants"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* Back button to return to explore */}
+              <div className="mb-4 flex items-center">
+                <button 
+                  onClick={() => setActiveTab("explore")} 
+                  className="flex items-center text-[#f5f5f7]/60 hover:text-[#f5f5f7] mr-4"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                  </svg>
+                  Back to Explore
+                </button>
+                
+                <h2 className="text-xl font-bold">
+                  Challenge Participants: 
+                  <span className="ml-2 text-[#A2BFFE]">
+                    {challenges.find(c => c._id === selectedChallengeId)?.name || ""}
+                  </span>
+                </h2>
+              </div>
+              
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
+                <ParticipantsList challengeId={selectedChallengeId} challenges={challenges} />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
