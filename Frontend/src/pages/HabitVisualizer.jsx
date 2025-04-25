@@ -15,7 +15,47 @@ const HabitVisualizer = () => {
   const [activeTab, setActiveTab] = useState("create");
   const [showCode, setShowCode] = useState(false);
   const mermaidRef = useRef(null);
-
+  const generateFallbackDiagram = (habitName) => {
+    return `flowchart TD
+      main["${habitName.replace(/"/g, "'")}"] :::habitStyle
+      
+      subgraph triggers["Triggers"]
+        t1["Morning Reminder"] :::triggerStyle
+        t2["Daily Routine"] :::triggerStyle
+      end
+      
+      subgraph steps["Process"]
+        s1["Preparation"] :::stepStyle
+        s2["Action"] :::stepStyle
+        s3["Completion"] :::stepStyle
+      end
+      
+      subgraph benefits["Benefits"]
+        b1["Mental Clarity"] :::rewardStyle
+        b2["Physical Health"] :::rewardStyle
+      end
+      
+      subgraph challenges["Challenges"]
+        c1["Time Management"] :::obstacleStyle
+        c2["Consistency"] :::obstacleStyle
+      end
+      
+      t1 --> main
+      t2 --> main
+      main --> s1
+      s1 --> s2
+      s2 --> s3
+      s3 --> b1
+      s3 --> b2
+      c1 -.-> main
+      c2 -.-> main
+      
+      classDef habitStyle fill:#9333EA,color:#fff,stroke:#7E22CE,stroke-width:2px
+      classDef triggerStyle fill:#3B82F6,color:#fff,stroke:#2563EB,stroke-width:1px
+      classDef stepStyle fill:#10B981,color:#fff,stroke:#059669,stroke-width:1px
+      classDef rewardStyle fill:#F59E0B,color:#fff,stroke:#D97706,stroke-width:1px
+      classDef obstacleStyle fill:#EF4444,color:#fff,stroke:#DC2626,stroke-width:1px`;
+  };
   useEffect(() => {
     // Initialize mermaid with dark theme
     mermaid.initialize({
@@ -45,23 +85,72 @@ const HabitVisualizer = () => {
       // Pre-process the mermaid code to fix common syntax errors
       let fixedCode = mermaidCode;
       
-      // Fix 1: Correct "id1end" type issues by inserting a space
+      // Fix 1: Ensure flowchart declaration is present and correct
+      if (!fixedCode.trim().startsWith('flowchart TD')) {
+        fixedCode = 'flowchart TD\n' + fixedCode.replace(/^flowchart\s+[^\n]+\n/, '');
+      }
+      
+      // Fix 2: Correct "id1end" type issues by inserting a space
       fixedCode = fixedCode.replace(/(\w+)end\b/g, '$1 end');
       
-      // Fix 2: Remove any invalid line endings
-      fixedCode = fixedCode.split('\n')
-        .filter(line => line.trim() !== '')
-        .map(line => {
-          // Remove any hanging arrows that don't connect to anything
-          if (line.trim().endsWith('-->') || line.trim().endsWith('-.->')) {
-            return '';
-          }
-          return line;
-        })
-        .filter(Boolean)
-        .join('\n');
+      // Fix 3: Fix the style class syntax (:::style to class=style)
+      fixedCode = fixedCode.replace(/(\w+)\["([^"]+)"\]\s*:::\s*(\w+)/g, '$1["$2"]');
       
-      // Fix 3: If any subgraph lacks "end", add it
+      // Extract all these classes to apply them at the end
+      const classMatches = [];
+      const classRegex = /(\w+)\["([^"]+)"\]\s*:::\s*(\w+)/g;
+      let match;
+      while ((match = classRegex.exec(mermaidCode)) !== null) {
+        classMatches.push({ id: match[1], className: match[3] });
+      }
+      
+      // Fix 4: Fix arrow connections with unusual formatting
+      fixedCode = fixedCode.replace(/(\w+)\s*-->\s*_(\w+)/g, '$1 --> $2');
+      // Remove :::style from node definitions
+fixedCode = fixedCode.replace(/:::\w+/g, '');
+
+// Fix multi-node class assignments (split by comma or space)
+fixedCode = fixedCode.replace(/^class\s+([^\n]+?)\s+(\w+)\s*$/gm, (match, ids, style) => {
+  // ids can be comma or space separated
+  return ids
+    .split(/[,\s]+/)
+    .filter(Boolean)
+    .map(id => `class ${id} ${style}`)
+    .join('\n');
+});
+      // Fix 5: Handle duplicate node definitions
+      const definedNodes = new Set();
+      const lines = fixedCode.split('\n');
+      const cleanedLines = [];
+      
+      for (const line of lines) {
+        // Skip empty lines
+        if (!line.trim()) continue;
+        
+        // Check for node definitions like id1["Label"]
+        const nodeMatch = line.match(/^\s*(\w+)\["([^"]+)"\]/);
+        
+        if (nodeMatch) {
+          const nodeId = nodeMatch[1];
+          if (definedNodes.has(nodeId)) {
+            // Skip duplicate node definition
+            continue;
+          }
+          definedNodes.add(nodeId);
+        }
+        
+        // Check for malformed closing tags
+        if (line.trim() === 'end}' || line.trim() === '}end') {
+          cleanedLines.push('end');
+          continue;
+        }
+        
+        cleanedLines.push(line);
+      }
+      
+      fixedCode = cleanedLines.join('\n');
+      
+      // Fix 6: Check and fix subgraph/end balance
       const subgraphCount = (fixedCode.match(/subgraph/g) || []).length;
       const endCount = (fixedCode.match(/end(\s|$)/g) || []).length;
       
@@ -71,21 +160,56 @@ const HabitVisualizer = () => {
         }
       }
       
-      // Fix 4: Remove any lines with syntax errors related to arrows
-      fixedCode = fixedCode.split('\n')
-        .map(line => {
-          // Check for invalid arrow connections
-          const arrowMatch = line.match(/-->/g) || [];
-          const nodeMatches = line.match(/\bid\d+/g) || [];
+      // Fix 7: Add class definitions at the end if no style declarations exist
+      let hasClassDefs = fixedCode.includes('classDef');
+      
+      if (!hasClassDefs) {
+        fixedCode += `
+        classDef habitStyle fill:#9333EA,color:#fff,stroke:#7E22CE,stroke-width:2px
+        classDef triggerStyle fill:#3B82F6,color:#fff,stroke:#2563EB,stroke-width:1px
+        classDef stepStyle fill:#10B981,color:#fff,stroke:#059669,stroke-width:1px
+        classDef rewardStyle fill:#F59E0B,color:#fff,stroke:#D97706,stroke-width:1px
+        classDef obstacleStyle fill:#EF4444,color:#fff,stroke:#DC2626,stroke-width:1px`;
+      }
+      
+      // Fix 8: Fix multi-node class assignments (separate them)
+      const classLines = [];
+      const nonClassLines = [];
+      
+      // Split code into class definitions and everything else
+      fixedCode.split('\n').forEach(line => {
+        const classMatch = line.trim().match(/^class\s+(.+)/);
+        if (classMatch) {
+          // Found a class assignment line
+          const classList = classMatch[1].trim();
           
-          // If a line has more arrows than it should have nodes, it might be malformed
-          if (arrowMatch.length > 0 && nodeMatches.length < arrowMatch.length + 1) {
-            return '';
+          // Check if it has multiple nodes (by looking for spaces before style name)
+          if (/\w+\s+\w+\s+\w+/.test(classList)) {
+            // Extract the style name (last word) and node IDs (all previous words)
+            const parts = classList.split(/\s+/);
+            const styleName = parts.pop(); // Last element is the style name
+            
+            // Create separate class assignments for each node
+            parts.forEach(nodeId => {
+              classLines.push(`class ${nodeId} ${styleName}`);
+            });
+          } else {
+            // Already a single class assignment, keep as is
+            classLines.push(line);
           }
-          return line;
-        })
-        .filter(Boolean)
-        .join('\n');
+        } else {
+          // Not a class line, keep as is
+          nonClassLines.push(line);
+        }
+      });
+      
+      // Reconstruct the code with fixed class assignments
+      fixedCode = nonClassLines.join('\n') + '\n' + classLines.join('\n');
+      
+      // Final fix for any other style issues
+      fixedCode = fixedCode.replace(/:::(\w+)/g, '');
+      
+      console.log("Rendering mermaid with fixed code:", fixedCode);
       
       mermaid.contentLoaded();
       

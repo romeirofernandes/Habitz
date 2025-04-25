@@ -172,7 +172,57 @@ exports.deleteVisualization = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete visualization' });
   }
 };
-
+// Add this to your existing code
+const validateAndFixMermaidCode = (mermaidCode, habitName) => {
+    try {
+      // Clean up the response
+      let fixedCode = mermaidCode.replace(/```mermaid\s*/g, '').replace(/```\s*$/g, '').trim();
+      
+      // Ensure it starts with flowchart TD
+      if (!fixedCode.startsWith('flowchart')) {
+        fixedCode = 'flowchart TD\n' + fixedCode;
+      }
+      
+      // Check for and remove problematic ::: style syntax
+      fixedCode = fixedCode.replace(/:::\s*(\w+)/g, '');
+      
+      // Check for unclosed subgraphs
+      const subgraphStarts = (fixedCode.match(/subgraph/g) || []).length;
+      const subgraphEnds = (fixedCode.match(/\send\s/g) || []).length;
+      
+      if (subgraphStarts > subgraphEnds) {
+        // Add missing end statements
+        for (let i = 0; i < subgraphStarts - subgraphEnds; i++) {
+          fixedCode += '\n    end';
+        }
+      }
+      
+      // Check if style definitions exist, add if missing
+      if (!fixedCode.includes('classDef')) {
+        fixedCode += `
+      classDef habitStyle fill:#9333EA,color:#fff,stroke:#7E22CE,stroke-width:2px
+      classDef triggerStyle fill:#3B82F6,color:#fff,stroke:#2563EB,stroke-width:1px
+      classDef stepStyle fill:#10B981,color:#fff,stroke:#059669,stroke-width:1px
+      classDef rewardStyle fill:#F59E0B,color:#fff,stroke:#D97706,stroke-width:1px
+      classDef obstacleStyle fill:#EF4444,color:#fff,stroke:#DC2626,stroke-width:1px
+        `;
+      }
+      
+      // Check if class applications exist, add if missing
+      if (!fixedCode.includes('class ')) {
+        // Find the main node ID 
+        const mainNodeMatch = fixedCode.match(/\s+(\w+)\["([^"]*?(?:habit|main)[^"]*?)"\]/i);
+        const mainNodeId = mainNodeMatch ? mainNodeMatch[1] : 'id1';
+        
+        fixedCode += `\n    class ${mainNodeId} habitStyle`;
+      }
+      
+      return fixedCode;
+    } catch (error) {
+      console.error('Error validating Mermaid code:', error);
+      return generateFallbackMermaid(habitName);
+    }
+  };
 /**
  * Generate mermaid code using Groq API
  */
@@ -184,40 +234,45 @@ const generateMermaidWithGroq = async (habitName, habitDescription = '') => {
       }
   
       const prompt = `
-  Create a Mermaid diagram that visualizes the habit "${habitName}" ${habitDescription ? `described as: "${habitDescription}"` : ''}.
-  
-  The diagram should include:
-  1. The main habit as a central node
-  2. Key components or steps involved in this habit
-  3. Triggers that start the habit
-  4. Rewards or benefits from the habit
-  5. Potential obstacles or challenges
-  6. Related habits or supporting activities
-  
-  IMPORTANT: Follow these instructions exactly for valid Mermaid syntax:
-  - Use flowchart TD (top-down) syntax
-  - Each node MUST have a unique ID (like id1, id2, etc.)
-  - Node text must be in quotes like id1["Node text"]
-  - Always close subgraphs with "end"
-  - Leave spaces between node connections and arrows
-  - Ensure proper indentation for readability
-  - Keep it visually appealing and not too complex
-  - Limit to 15-20 nodes maximum for clarity
-  
-  Example of correct syntax:
-  flowchart TD
-      id1["Main Habit"]
-      
-      subgraph Triggers
-          id2["Trigger 1"]
-          id3["Trigger 2"]
-      end
-      
-      id2 --> id1
-      id3 --> id1
-  
-  Return ONLY valid mermaid code without explanation or markdown tags.
-  `;
+Create a Mermaid diagram that visualizes the habit "${habitName}" ${habitDescription ? `described as: "${habitDescription}"` : ''}.
+
+The diagram should include:
+1. The main habit as a central node
+2. Key components or steps involved in this habit
+3. Triggers that start the habit
+4. Rewards or benefits from the habit
+5. Potential obstacles or challenges
+6. Related habits or supporting activities
+
+IMPORTANT: Follow these instructions exactly for valid Mermaid syntax:
+- Use flowchart TD (top-down) syntax
+- Each node MUST have a unique ID (like id1, id2, etc.)
+- Node text must be in quotes like id1["Node text"]
+- Always close subgraphs with "end"
+- Leave spaces between node connections and arrows
+- For obstacles, use dotted lines (-.->)
+- DO NOT use ::: syntax for styling
+- Add style definitions with classDef at the end
+- Apply styles with class statements (e.g., class id1 habitStyle)
+- Ensure proper indentation for readability
+
+Return ONLY valid mermaid code without explanation or markdown tags.
+
+Example of correct syntax:
+flowchart TD
+    id1["Main Habit"]
+    
+    subgraph Triggers
+        id2["Trigger 1"]
+        id3["Trigger 2"]
+    end
+    
+    id2 --> id1
+    id3 --> id1
+    
+    classDef habitStyle fill:#9333EA,color:#fff,stroke:#7E22CE,stroke-width:2px
+    class id1 habitStyle
+`;
   
       const response = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
@@ -245,7 +300,7 @@ const generateMermaidWithGroq = async (habitName, habitDescription = '') => {
       );
       
       let mermaidCode = response.data.choices[0]?.message?.content || '';
-      
+      mermaidCode = validateAndFixMermaidCode(mermaidCode, habitName);
       // Clean up the response
       // Remove markdown code blocks if they exist
       mermaidCode = mermaidCode.replace(/```mermaid\s*/g, '').replace(/```\s*$/g, '').trim();
