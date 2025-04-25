@@ -15,6 +15,37 @@ const HabitVisualizer = () => {
   const [activeTab, setActiveTab] = useState("create");
   const [showCode, setShowCode] = useState(false);
   const mermaidRef = useRef(null);
+  // Add at the top with other useState
+const [forecast, setForecast] = useState(null);
+const [forecastLoading, setForecastLoading] = useState(false);
+const [showForecast, setShowForecast] = useState(false);
+
+// Handler to fetch forecast
+const handleForecast = async () => {
+  setForecastLoading(true);
+  setShowForecast(true);
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/forecast/habit`,
+      {
+        habitName,
+        habitDescription,
+        mermaidCode
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    setForecast(response.data);
+  } catch (err) {
+    setForecast({ error: "Could not fetch forecast." });
+  } finally {
+    setForecastLoading(false);
+  }
+};
   const generateFallbackDiagram = (habitName) => {
     return `flowchart TD
       main["${habitName.replace(/"/g, "'")}"] :::habitStyle
@@ -112,6 +143,14 @@ fixedCode = fixedCode.replace(/:::\w+/g, '');
 // Fix multi-node class assignments (split by comma or space)
 fixedCode = fixedCode.replace(/^class\s+([^\n]+?)\s+(\w+)\s*$/gm, (match, ids, style) => {
   // ids can be comma or space separated
+  // After removing :::style, add class assignments for each node
+const nodeClassRegex = /(\w+)\["[^"]*"\]\s*:::\s*(\w+)/g;
+let match1;
+let classAssignments = '';
+while ((match1 = nodeClassRegex.exec(mermaidCode)) !== null) {
+  classAssignments += `class ${match1[1]} ${match1[3]}\n`;
+}
+fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
   return ids
     .split(/[,\s]+/)
     .filter(Boolean)
@@ -553,6 +592,8 @@ fixedCode = fixedCode.replace(/^class\s+([^\n]+?)\s+(\w+)\s*$/gm, (match, ids, s
                       </div>
                     </form>
                   </div>
+                  
+
                   <div>
                     {mermaidCode && (
                       <div className="mt-0 h-full">
@@ -592,15 +633,61 @@ fixedCode = fixedCode.replace(/^class\s+([^\n]+?)\s+(\w+)\s*$/gm, (match, ids, s
                               </svg>
                               {showCode ? "Hide Code" : "View Code"}
                             </motion.button>
+                            <motion.button
+  onClick={handleForecast}
+  className="text-xs bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-3 py-1 rounded-md flex items-center"
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+>
+  🔮 Forecast
+</motion.button>
                           </div>
                         </div>
                         
-                        {/* Show code only if toggled on */}
                         {showCode && (
-                          <div className="bg-[#111] rounded-md p-3 overflow-auto max-h-60 mb-4">
-                            <pre className="text-xs text-[#f5f5f7]/70 whitespace-pre-wrap">{mermaidCode}</pre>
-                          </div>
-                        )}
+  <div className="bg-[#111] rounded-md p-3 overflow-auto max-h-60 mb-4">
+    <pre className="text-xs text-[#f5f5f7]/70 whitespace-pre-wrap">{mermaidCode}</pre>
+  </div>
+)}
+{showForecast && (
+  <section className="mt-6 bg-[#18181b] rounded-xl p-8 shadow-2xl border border-[#222]">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-2xl font-bold flex items-center gap-2">
+        🔮 Habit Forecast
+      </h2>
+      <button
+        className="text-[#A2BFFE] text-xl"
+        onClick={() => setShowForecast(false)}
+        aria-label="Close forecast"
+        type="button"
+      >×</button>
+    </div>
+    {forecastLoading ? (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#A2BFFE]"></div>
+      </div>
+    ) : forecast?.error ? (
+      <div className="text-red-400">{forecast.error}</div>
+    ) : (
+      <div className="space-y-4">
+        {["30", "90", "365"].map((day) => (
+          <div key={day} className="border-b border-[#333] pb-3 mb-3">
+            <h3 className="font-bold text-[#A2BFFE] mb-1">
+              {day === "30" ? "30 Days" : day === "90" ? "90 Days" : "1 Year"}
+            </h3>
+            <pre className="whitespace-pre-wrap text-sm text-[#f5f5f7]/90">
+              {forecast?.[day]
+                ? typeof forecast[day] === "string"
+                  ? forecast[day]
+                  : JSON.stringify(forecast[day], null, 2)
+                : "No data."}
+            </pre>
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+)}
                       </div>
                     )}
                   </div>
@@ -701,7 +788,9 @@ fixedCode = fixedCode.replace(/^class\s+([^\n]+?)\s+(\w+)\s*$/gm, (match, ids, s
                   ))}
                 </div>
               )}
+              
             </div>
+            
           </motion.div>
         )}
       </main>

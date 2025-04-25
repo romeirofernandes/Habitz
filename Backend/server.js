@@ -9,6 +9,7 @@ const socketIo = require("socket.io");
 const Chat = require("./models/chat"); // Add this
 const recommendationRoutes = require('./routes/recommendationRoute');
 const visualizerRoutes = require('./routes/visualizerRoutes');
+const forecastRoutes = require('./routes/forecastRoutes');
 require("dotenv").config();
 
 const PORT = process.env.PORT || 8000;
@@ -118,6 +119,7 @@ app.get("/", (req, res) => {
   res.send("Habitz API is running...");
 });
 app.use('/api/visualizer', visualizerRoutes);
+app.use('/api/forecast', forecastRoutes);
 
 // Change app.listen to httpServer.listen
 httpServer.listen(PORT, () => {
