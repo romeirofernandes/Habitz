@@ -6,8 +6,10 @@ import HabitForm from "../components/dashboard/HabitForm";
 import HabitList from "../components/dashboard/HabitList";
 import StreaksList from "../components/dashboard/StreaksList";
 import StatsCard from "../components/dashboard/StatsCard";
+import HabitRecommendations from "../components/dashboard/HabitRecommendation";
 import axios from "axios";
 import { toast } from "react-toastify";
+import StreakStaircase from "../components/dashboard/StreakStaircase";
 
 const Dashboard = () => {
   const [habits, setHabits] = useState([]);
@@ -20,12 +22,20 @@ const Dashboard = () => {
     totalHabits: 0,
   });
   const [activeTab, setActiveTab] = useState("habits");
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     fetchHabits();
   }, []);
+
+  useEffect(() => {
+    if (habits.length > 0) {
+      generateRecommendations();
+    }
+  }, [habits]);
 
   const fetchHabits = async () => {
     try {
@@ -75,6 +85,98 @@ const Dashboard = () => {
     });
   };
 
+  const generateRecommendations = async () => {
+    // Skip if we don't have habits or already loading
+    if (habits.length === 0 || loadingRecommendations) return;
+    
+    setLoadingRecommendations(true);
+    
+    try {
+      // Format the habits data for the API request
+      const habitNames = habits.map(h => h.name);
+      const habitCategories = [...new Set(habits.map(h => h.category))];
+      const timePreferences = habits.map(h => h.timeOfDay);
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/recommendations`,
+        {
+          existingHabits: habitNames, 
+          categories: habitCategories,
+          timePreferences: timePreferences
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+      
+      setRecommendations(response.data);
+    } catch (error) {
+      console.error("Error generating recommendations:", error);
+      // Set fallback recommendations if the API fails
+      setRecommendations([
+        {
+          category: "health",
+          title: "Drink a glass of water",
+          recommendation: "Adding water intake could boost your productivity.",
+          timeOfDay: "08:00",
+          icon: "💧"
+        },
+        {
+          category: "productivity",
+          title: "5-minute journal",
+          recommendation: "Consider a short journaling session to reflect.",
+          timeOfDay: "21:00",
+          icon: "📝"
+        },
+        {
+          category: "self-care",
+          title: "2-minute meditation",
+          recommendation: "Start small with just 2 minutes of meditation.",
+          timeOfDay: "07:30",
+          icon: "🧘"
+        }
+      ]);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
+  
+  const handleAddRecommendation = async (habitData) => {
+    try {
+      const token = localStorage.getItem("token");
+      
+      // First check if this exact habit already exists
+      const habitExists = habits.some(h => 
+        h.name.toLowerCase() === habitData.name.toLowerCase()
+      );
+      
+      if (habitExists) {
+        toast.info("This habit already exists in your list!");
+        return;
+      }
+      
+      // Create the new habit via API
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/habits`,
+        habitData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      // Refresh the habits list
+      fetchHabits();
+      toast.success("Habit added successfully!");
+    } catch (error) {
+      console.error("Error adding habit:", error);
+      toast.error("Failed to add habit");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#080808] text-[#f5f5f7] flex items-center justify-center">
@@ -116,13 +218,18 @@ const Dashboard = () => {
             title="Current Streak"
             value={`${stats.currentStreak} days`}
             icon="🔥"
+            isStreak={true}  
           />
           <StatsCard
             title="Completion Rate"
             value={`${stats.completionRate}%`}
             icon="📊"
           />
-          <StatsCard title="Total Habits" value={stats.totalHabits} icon="✨" />
+          <StatsCard 
+            title="Total Habits" 
+            value={stats.totalHabits} 
+            icon="✨" 
+          />
         </div>
 
         {/* Error State */}
@@ -157,7 +264,7 @@ const Dashboard = () => {
 
         {/* After Stats Cards */}
         <div className="flex gap-4 mb-6 border-b border-[#222]">
-          {["habits", "streaks"].map((tab) => (
+          {["habits", "streaks", "recommendations"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -167,7 +274,11 @@ const Dashboard = () => {
                   : "text-[#f5f5f7]/60 hover:text-[#f5f5f7]"
               }`}
             >
-              {tab === "habits" ? "Daily Habits" : "Streak Stats"}
+              {tab === "habits" 
+                ? "Daily Habits" 
+                : tab === "streaks" 
+                  ? "Streak Stats" 
+                  : "For You"}
               {activeTab === tab && (
                 <motion.div
                   layoutId="activeTab"
@@ -178,7 +289,7 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Replace the existing HabitList render with this */}
+        {/* Content based on active tab */}
         {!error && habits.length > 0 && (
           <AnimatePresence mode="wait">
             <motion.div
@@ -190,8 +301,15 @@ const Dashboard = () => {
             >
               {activeTab === "habits" ? (
                 <HabitList habits={habits} onHabitUpdate={fetchHabits} />
-              ) : (
+              ) : activeTab === "streaks" ? (
                 <StreaksList habits={habits} />
+              ) : (
+                <HabitRecommendations 
+                  onAddHabit={handleAddRecommendation} 
+                  recommendations={recommendations}
+                  loading={loadingRecommendations}
+                  onRefresh={generateRecommendations}
+                />
               )}
             </motion.div>
           </AnimatePresence>

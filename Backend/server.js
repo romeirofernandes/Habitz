@@ -7,6 +7,7 @@ const partnerRoutes = require("./routes/partnerRoutes");
 const authRoutes = require("./routes/authroutes");
 const socketIo = require("socket.io");
 const Chat = require("./models/chat"); // Add this
+const recommendationRoutes = require('./routes/recommendationRoute');
 require("dotenv").config();
 
 const PORT = process.env.PORT || 8000;
@@ -111,7 +112,7 @@ app.use(express.json());
 app.use("/api/habits", habitRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/partners", partnerRoutes);
-
+app.use('/api/recommendations', recommendationRoutes);
 app.get("/", (req, res) => {
   res.send("Habitz API is running...");
 });
