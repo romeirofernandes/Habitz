@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
-
+import ParticipantsList from "../components/Challenges/ParticipantsList";
 
 const Challenges = () => {
   const [activeTab, setActiveTab] = useState("explore");
@@ -11,6 +11,9 @@ const Challenges = () => {
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [customProgressValues, setCustomProgressValues] = useState({}); // Add this state for tracking individual progress inputs
+  const [progressErrors, setProgressErrors] = useState({}); // Add state to track validation errors
+  const [selectedChallengeId, setSelectedChallengeId] = useState(""); // Added missing state for selected challenge
   
   // Form states
   const [formData, setFormData] = useState({
@@ -76,16 +79,26 @@ const Challenges = () => {
   };
 
   // Update progress for a challenge
-  const updateProgress = async (challengeId, progress) => {
+  const updateProgress = async (challengeId, progress, currentProgress) => {
+    // Calculate new total progress
+    const newTotalProgress = currentProgress + progress;
+    
+    // Check if it would exceed 100%
+    if (newTotalProgress > 100) {
+      toast.warning("Cannot exceed 100% progress!");
+      return;
+    }
+    
     try {
       const token = localStorage.getItem("token");
       const user = localStorage.getItem("user");
-
+  
       await axios.post(
         `${import.meta.env.VITE_API_URL}/api/challenges/${challengeId}/progress`,
-        { progress
-, user: user ? JSON.parse(user) : undefined
-         },
+        { 
+          progress,
+          user: user ? JSON.parse(user) : undefined
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -191,6 +204,50 @@ socket.onmessage = (event) => {
     });
   };
 
+  // Modify this function to validate progress total doesn't exceed 100%
+  const handleCustomProgressChange = (challengeId, value, currentProgress) => {
+    // Clear any existing error for this challenge
+    setProgressErrors(prev => ({
+      ...prev,
+      [challengeId]: null
+    }));
+    
+    // Parse the input value
+    const inputValue = parseInt(value) || 0;
+    
+    // Check if the new total would exceed 100%
+    if (inputValue + currentProgress > 100) {
+      // Calculate maximum allowed value
+      const maxAllowed = 100 - currentProgress;
+      
+      // Set error message
+      setProgressErrors(prev => ({
+        ...prev,
+        [challengeId]: `Cannot exceed 100%. Maximum allowed: ${maxAllowed}%`
+      }));
+      
+      // Limit the input to the maximum allowed value
+      setCustomProgressValues(prev => ({
+        ...prev,
+        [challengeId]: maxAllowed.toString()
+      }));
+    } else {
+      // Valid input, store it normally
+      setCustomProgressValues(prev => ({
+        ...prev,
+        [challengeId]: value
+      }));
+    }
+  };
+
+  // Add this function to clear a specific progress input
+  const clearCustomProgress = (challengeId) => {
+    setCustomProgressValues(prev => ({
+      ...prev,
+      [challengeId]: ""
+    }));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#080808] text-[#f5f5f7] flex items-center justify-center">
@@ -222,7 +279,7 @@ socket.onmessage = (event) => {
 
         {/* Tabs */}
         <div className="flex gap-4 mb-6 border-b border-[#222]">
-          {["explore", "my-challenges", "live-updates"].map((tab) => (
+          {["explore", "my-challenges", "live-updates","participants"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -236,7 +293,9 @@ socket.onmessage = (event) => {
                 ? "Explore" 
                 : tab === "my-challenges" 
                   ? "My Challenges" 
-                  : "Live Updates"}
+                  : tab === "participants"
+                    ? "Participants"
+                    : "Live Updates"}
               {activeTab === tab && (
                 <motion.div
                   layoutId="activeTab"
@@ -350,83 +409,187 @@ socket.onmessage = (event) => {
               ) : (
                 <div className="space-y-6">
                   {myParticipations.map((challenge) => {
-                    // Find user's participation
-                    const token = localStorage.getItem("token");
-                    const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
-                    const myParticipation = challenge.participants.find(
-                      p => p.user === userId || p.user?._id === userId
-                    );
-                    const progress = myParticipation?.progress || 0;
-                    
-                    return (
-                      <motion.div
-                        key={challenge._id}
-                        className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <h3 className="font-bold text-xl text-[#A2BFFE] mb-2">
-                          {challenge.name}
-                        </h3>
-                        <p className="text-[#f5f5f7]/60 mb-4">
-                          {challenge.description}
-                        </p>
-                        
-                        <div className="mb-6">
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Progress</span>
-                            <span className="text-[#A2BFFE]">{progress}%</span>
-                          </div>
-                          <div className="w-full bg-[#222] rounded-full h-2.5">
-                            <div 
-                              className="bg-[#A2BFFE] h-2.5 rounded-full" 
-                              style={{ width: `${progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-3 mb-6">
-                          <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
-                            <p className="text-xs text-[#f5f5f7]/60">Start Date</p>
-                            <p className="text-sm font-medium">
-                              {new Date(challenge.startDate).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
-                            <p className="text-xs text-[#f5f5f7]/60">End Date</p>
-                            <p className="text-sm font-medium">
-                              {new Date(challenge.endDate).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
-                            <p className="text-xs text-[#f5f5f7]/60">Participants</p>
-                            <p className="text-sm font-medium">{challenge.participants.length}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex gap-3">
-                          {[10, 25, 50].map((amount) => (
-                            <motion.button
-                              key={amount}
-                              onClick={() => updateProgress(challenge._id, amount)}
-                              className="flex-1 bg-[#222] hover:bg-[#333] text-[#f5f5f7] py-2 rounded-lg text-sm"
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              disabled={progress >= 100}
-                            >
-                              +{amount}%
-                            </motion.button>
-                          ))}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+  // Find user's participation
+  const token = localStorage.getItem("token");
+  const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
+  const myParticipation = challenge.participants.find(
+    p => p.user === userId || p.user?._id === userId
+  );
+  const progress = myParticipation?.progress || 0;
+  // Remove the useState here and use the value from the state object
+  const customProgress = customProgressValues[challenge._id] || "";
+  
+  return (
+    <motion.div
+      key={challenge._id}
+      className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <h3 className="font-bold text-xl text-[#A2BFFE] mb-2">
+        {challenge.name}
+      </h3>
+      <p className="text-[#f5f5f7]/60 mb-4">
+        {challenge.description}
+      </p>
+      
+      <div className="mb-6">
+        <div className="flex justify-between text-sm mb-1">
+          <span>Progress</span>
+          <span className="text-[#A2BFFE]">{progress}%</span>
+        </div>
+        <div className="w-full bg-[#222] rounded-full h-2.5">
+          <div 
+            className="bg-[#A2BFFE] h-2.5 rounded-full" 
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+      </div>
+      
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
+          <p className="text-xs text-[#f5f5f7]/60">Start Date</p>
+          <p className="text-sm font-medium">
+            {new Date(challenge.startDate).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
+          <p className="text-xs text-[#f5f5f7]/60">End Date</p>
+          <p className="text-sm font-medium">
+            {new Date(challenge.endDate).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
+          <p className="text-xs text-[#f5f5f7]/60">Participants</p>
+          <p className="text-sm font-medium">{challenge.participants.length}</p>
+        </div>
+      </div>
+      
+      {/* Quick percentage buttons */}
+      <div className="flex gap-3 mb-4">
+        {[10, 25, 50].map((amount) => (
+          <motion.button
+            key={amount}
+            onClick={() => updateProgress(challenge._id, amount, progress)}
+            className={`flex-1 bg-[#222] hover:bg-[#333] text-[#f5f5f7] py-2 rounded-lg text-sm ${
+              progress >= 100 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            whileHover={{ scale: progress >= 100 ? 1 : 1.02 }}
+            whileTap={{ scale: progress >= 100 ? 1 : 0.98 }}
+            disabled={progress >= 100}
+          >
+            +{amount}%
+          </motion.button>
+        ))}
+      </div>
+      
+      {/* Custom percentage input */}
+      <div className="flex gap-3 mt-3">
+        <div className="flex-1">
+          <div className="relative">
+            <input
+              type="number"
+              value={customProgress}
+              onChange={(e) => handleCustomProgressChange(challenge._id, e.target.value, progress)}
+              placeholder="Custom %"
+              min="1"
+              max={100 - progress}
+              className={`w-full px-4 py-2 bg-[#111] border ${
+                progressErrors[challenge._id] ? 'border-red-500' : 'border-[#222]'
+              } rounded-lg focus:outline-none focus:ring-1 focus:ring-[#A2BFFE]/50 ${
+                progress >= 100 ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              disabled={progress >= 100}
+            />
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#f5f5f7]/40">
+              %
+            </span>
+          </div>
+          {progressErrors[challenge._id] && (
+            <p className="text-xs text-red-500 mt-1">{progressErrors[challenge._id]}</p>
+          )}
+        </div>
+        
+        <motion.button
+          onClick={() => {
+            // Only proceed if there's valid input and no errors
+            if (customProgress && parseInt(customProgress) > 0 && !progressErrors[challenge._id]) {
+              updateProgress(challenge._id, parseInt(customProgress), progress);
+              clearCustomProgress(challenge._id); // Clear input after submission
+            } else if (progressErrors[challenge._id]) {
+              toast.error(progressErrors[challenge._id]);
+            } else {
+              toast.warning("Please enter a valid percentage");
+            }
+          }}
+          className={`bg-[#A2BFFE] text-[#080808] px-4 py-2 rounded-lg font-medium text-sm ${
+            !customProgress || progress >= 100 ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          whileHover={{ scale: !customProgress || progress >= 100 ? 1 : 1.02 }}
+          whileTap={{ scale: !customProgress || progress >= 100 ? 1 : 0.98 }}
+          disabled={!customProgress || progress >= 100}
+        >
+          Add
+        </motion.button>
+      </div>
+      
+      {/* Completion message */}
+      {progress >= 100 && (
+        <div className="mt-4 flex items-center justify-center py-2 text-sm text-green-500 bg-green-500/10 rounded-lg">
+          <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          Challenge completed!
+        </div>
+      )}
+    </motion.div>
+  );
+})}
                 </div>
               )}
             </motion.div>
           )}
+            {activeTab === "participants" && (
+  <motion.div
+    key="participants"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.2 }}
+  >
+    {/* Challenge Selector */}
+    <div className="mb-6">
+      <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
+        Select Challenge
+      </label>
+      <select
+        value={selectedChallengeId || ""}
+        onChange={(e) => setSelectedChallengeId(e.target.value)}
+        className="w-full px-4 py-2.5 bg-[#111] border border-[#222] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50"
+      >
+        <option value="">Select a challenge</option>
+        {challenges.map((challenge) => (
+          <option key={challenge._id} value={challenge._id}>
+            {challenge.name}
+          </option>
+        ))}
+      </select>
+    </div>
 
+    {selectedChallengeId ? (
+      <ParticipantsList challengeId={selectedChallengeId} challenges={challenges} />
+    ) : (
+      <div className="text-center py-12 bg-[#0a0a0a] border border-[#222] rounded-xl">
+        <div className="text-4xl mb-4">👥</div>
+        <h3 className="text-xl font-bold mb-2">Select a Challenge</h3>
+        <p className="text-[#f5f5f7]/60">
+          Choose a challenge from the dropdown to see all participants
+        </p>
+      </div>
+    )}
+  </motion.div>
+)}
           {activeTab === "live-updates" && (
             <motion.div
               key="live-updates"

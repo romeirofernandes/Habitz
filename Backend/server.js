@@ -11,7 +11,9 @@ const recommendationRoutes = require('./routes/recommendationRoute');
 const visualizerRoutes = require('./routes/visualizerRoutes');
 const forecastRoutes = require('./routes/forecastRoutes');
 const challengeRoutes = require('./routes/challengeRoutes');
+const userRoutes = require("./routes/userRoutes");
 const { initWebsocket } = require('./services/websocket');
+const user = require("./models/user");
 require("dotenv").config();
 
 const PORT = process.env.PORT || 8000;
@@ -125,6 +127,7 @@ app.get("/", (req, res) => {
 app.use('/api/visualizer', visualizerRoutes);
 app.use('/api/forecast', forecastRoutes);
 app.use('/api/challenges', challengeRoutes);
+app.use("/api/users", userRoutes);
 
 // Change app.listen to httpServer.listen
 httpServer.listen(PORT, () => {
