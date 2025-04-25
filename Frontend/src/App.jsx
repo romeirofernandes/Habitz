@@ -14,6 +14,8 @@ import Achievements from "./pages/Acievements";
 import UserProfile from "./components/dashboard/Profile";
 
 function App() {
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const userId = user?._id;
   return (
     <BrowserRouter>
       <Routes>
@@ -68,7 +70,7 @@ function App() {
             <ProtectedRoute>
               <Sidebar>
                 <UserProfile
-                  userId={JSON.parse(localStorage.getItem("user"))._id}
+                  userId={userId}
                   isOwnProfile={true}
                 />
               </Sidebar>
