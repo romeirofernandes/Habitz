@@ -11,72 +11,82 @@ import Progress from "./pages/Progress";
 import Sidebar from "./components/Sidebar";
 import Partners from "./pages/Partners";
 import Achievements from "./pages/Acievements";
+import UserProfile from "./components/dashboard/Profile";
 
 function App() {
   return (
-    <>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected routes with Sidebar */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Sidebar>
-                  <Dashboard />
-                </Sidebar>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/progress"
-            element={
-              <ProtectedRoute>
-                <Sidebar>
-                  <Progress />
-                </Sidebar>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/partners"
-            element={
-              <ProtectedRoute>
-                <Sidebar>
-                  <Partners />
-                </Sidebar>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/achievements"
-            element={
-              <ProtectedRoute>
-                <Sidebar>
-                  <Achievements />
-                </Sidebar>
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </>
+        {/* Protected routes with Sidebar */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Sidebar>
+                <Dashboard />
+              </Sidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/progress"
+          element={
+            <ProtectedRoute>
+              <Sidebar>
+                <Progress />
+              </Sidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/partners"
+          element={
+            <ProtectedRoute>
+              <Sidebar>
+                <Partners />
+              </Sidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/achievements"
+          element={
+            <ProtectedRoute>
+              <Sidebar>
+                <Achievements />
+              </Sidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Sidebar>
+                <UserProfile
+                  userId={JSON.parse(localStorage.getItem("user"))._id}
+                  isOwnProfile={true}
+                />
+              </Sidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/:userId"
+          element={
+            <ProtectedRoute>
+              <Sidebar>
+                <UserProfile isOwnProfile={false} />
+              </Sidebar>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

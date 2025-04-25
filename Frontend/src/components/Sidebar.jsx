@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const Sidebar = ({ children }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -18,7 +19,8 @@ const Sidebar = ({ children }) => {
           viewBox="0 0 20 20"
           fill="currentColor"
         >
-          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+          <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+          <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
         </svg>
       ),
     },
@@ -77,13 +79,58 @@ const Sidebar = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-[#080808]">
       {/* Sidebar */}
-      <div className="fixed top-0 left-0 h-full w-16 md:w-64 bg-[#0a0a0a] border-r border-[#222] flex flex-col py-6 z-10">
-        <div className="px-4 mb-8 hidden md:block">
-          <Link to="/dashboard" className="text-xl font-bold text-[#A2BFFE]">
-            Habitz
-          </Link>
+      <motion.div
+        initial={{ width: "16rem" }}
+        animate={{ width: isCollapsed ? "4rem" : "16rem" }}
+        className="fixed top-0 left-0 h-full bg-[#0a0a0a] border-r border-[#222] flex flex-col py-6 z-10"
+        transition={{ duration: 0.3 }}
+      >
+        {/* Header */}
+        <div className="px-4 mb-8 flex items-center justify-between">
+          {!isCollapsed && (
+            <Link to="/dashboard" className="text-xl font-bold text-[#A2BFFE]">
+              Habitz
+            </Link>
+          )}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-2 hover:bg-[#222] rounded-lg transition-colors"
+          >
+            {isCollapsed ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 5l7 7-7 7"
+                />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 19l-7-7 7-7"
+                />
+              </svg>
+            )}
+          </button>
         </div>
 
+        {/* Nav Items */}
         <div className="flex-1 px-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -98,7 +145,7 @@ const Sidebar = ({ children }) => {
                   whileHover={{ x: 4 }}
                 >
                   {item.icon}
-                  <span className="hidden md:block">{item.name}</span>
+                  {!isCollapsed && <span>{item.name}</span>}
                   {isActive && (
                     <motion.div
                       className="absolute left-0 w-1 h-8 bg-[#A2BFFE] rounded-r-full"
@@ -111,17 +158,34 @@ const Sidebar = ({ children }) => {
           })}
         </div>
 
+        {/* Profile & Logout */}
         <div className="mt-auto px-2">
-          <motion.div className="px-3 py-2 hidden md:block">
-            <p className="text-sm font-medium text-[#f5f5f7]">
-              {user?.username || "User"}
-            </p>
-            <p className="text-xs text-[#f5f5f7]/50">{user?.email}</p>
-          </motion.div>
+          <Link to="/profile">
+            <motion.div
+              className={`flex items-center gap-3 p-3 rounded-lg mb-2 hover:bg-[#222]/50 transition-colors`}
+              whileHover={{ x: 4 }}
+            >
+              <div className="w-8 h-8 rounded-full bg-[#A2BFFE] flex items-center justify-center">
+                <span className="text-sm font-bold text-[#080808]">
+                  {user?.username?.[0]?.toUpperCase()}
+                </span>
+              </div>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#f5f5f7] truncate">
+                    {user?.username}
+                  </p>
+                  <p className="text-xs text-[#f5f5f7]/50 truncate">
+                    {user?.email}
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </Link>
 
           <motion.button
-            className="flex items-center gap-3 px-3 py-3 rounded-lg w-full text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#222]/50"
             onClick={logout}
+            className="flex items-center gap-3 px-3 py-3 rounded-lg w-full text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#222]/50"
             whileHover={{ x: 4 }}
           >
             <svg
@@ -136,13 +200,19 @@ const Sidebar = ({ children }) => {
                 clipRule="evenodd"
               />
             </svg>
-            <span className="hidden md:block">Logout</span>
+            {!isCollapsed && <span>Logout</span>}
           </motion.button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Main content */}
-      <div className="flex-1 ml-16 md:ml-64">{children}</div>
+      {/* Main Content */}
+      <motion.div
+        initial={{ marginLeft: "16rem" }}
+        animate={{ marginLeft: isCollapsed ? "4rem" : "16rem" }}
+        className="flex-1 transition-all duration-300"
+      >
+        {children}
+      </motion.div>
     </div>
   );
 };

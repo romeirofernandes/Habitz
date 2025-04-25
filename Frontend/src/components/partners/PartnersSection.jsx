@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import ChatWindow from "./ChatWindow";
 import { FaUserMinus } from "react-icons/fa";
+import { debounce } from "lodash";
 
 const PartnersSection = () => {
   const currentUser = JSON.parse(localStorage.getItem("user")); // Add this line
@@ -116,38 +117,38 @@ const PartnersSection = () => {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchTerm) return;
-
-    setLoading(true);
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/partners/search`,
-        { query: searchTerm },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      // Filter out existing partners and pending requests
-      const filteredResults = response.data.filter((user) => {
-        const isPartner = partners.some(
-          (p) => p.user._id === user._id || p.partner._id === user._id
+  // Debounced search function
+  const debouncedSearch = React.useCallback(
+    debounce(async (searchTerm) => {
+      if (!searchTerm) {
+        setSearchResults([]);
+        return;
+      }
+      setLoading(true);
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/partners/search`,
+          { query: searchTerm },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
         );
-        const hasPendingRequest = pendingRequests.some(
-          (r) => r.user._id === user._id || r.partner._id === user._id
-        );
-        return !isPartner && !hasPendingRequest;
-      });
+        setSearchResults(response.data);
+      } catch (error) {
+        toast.error("Search failed");
+      } finally {
+        setLoading(false);
+      }
+    }, 500),
+    []
+  );
 
-      setSearchResults(filteredResults);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Search failed");
-    } finally {
-      setLoading(false);
-    }
+  // Update search handler
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+    debouncedSearch(e.target.value);
   };
 
   // Update the sendPartnerRequest function
@@ -187,7 +188,7 @@ const PartnersSection = () => {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearch}
             placeholder="Search by username or email"
             className="flex-1 px-4 py-2 bg-[#1a1a1a] border border-[#222] rounded-lg"
           />
