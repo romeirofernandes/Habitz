@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
 import ChatWindow from "./ChatWindow";
+import { FaUserMinus } from "react-icons/fa";
 
 const PartnersSection = () => {
   const currentUser = JSON.parse(localStorage.getItem("user")); // Add this line
@@ -11,10 +12,15 @@ const PartnersSection = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activeChatPartner, setActiveChatPartner] = useState(null);
+
+  // Add this state
+  const [unreadCounts, setUnreadCounts] = useState({});
 
   useEffect(() => {
     fetchPartners();
     fetchPendingRequests();
+    fetchUnreadCounts(); // Add this line
   }, []);
 
   const fetchPendingRequests = async () => {
@@ -94,6 +100,22 @@ const PartnersSection = () => {
     }
   };
 
+  const fetchUnreadCounts = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/partners/unread-counts`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setUnreadCounts(response.data);
+    } catch (error) {
+      console.error("Failed to fetch unread counts:", error);
+    }
+  };
+
   const handleSearch = async () => {
     if (!searchTerm) return;
 
@@ -149,6 +171,11 @@ const PartnersSection = () => {
       );
       console.error("Partner request error:", error);
     }
+  };
+
+  // Add this function
+  const handleStartChat = (partner) => {
+    setActiveChatPartner(partner);
   };
 
   return (
@@ -249,18 +276,52 @@ const PartnersSection = () => {
             No partners yet. Search to add some!
           </p>
         ) : (
-          partners.map((partnership) => (
-            <PartnerCard
-              key={partnership._id}
-              partner={
-                partnership.user._id === currentUser.id
-                  ? partnership.partner
-                  : partnership.user
-              }
-            />
-          ))
+          partners.map((partnership) => {
+            // Change this to correctly identify the partner
+            const partner =
+              partnership.user._id === currentUser.id
+                ? partnership.partner
+                : partnership.user;
+            const unreadCount = unreadCounts[partner._id] || 0;
+
+            return (
+              <div
+                key={partnership._id}
+                className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg"
+              >
+                <div>
+                  <p className="font-medium">{partner.username}</p>
+                  <p className="text-sm text-[#f5f5f7]/60">{partner.email}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <span className="bg-[#A2BFFE] text-[#080808] px-2 py-1 rounded-full text-sm">
+                      {unreadCount}
+                    </span>
+                  )}
+                  <motion.button
+                    onClick={() => handleStartChat(partner)}
+                    className="px-4 py-2 bg-[#222] text-[#f5f5f7] rounded-md font-medium"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Chat
+                  </motion.button>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
+
+      {/* Add chat window */}
+      {activeChatPartner && (
+        <ChatWindow
+          partnerId={activeChatPartner._id}
+          partnerName={activeChatPartner.username}
+          onClose={() => setActiveChatPartner(null)}
+        />
+      )}
     </div>
   );
 };
@@ -274,6 +335,26 @@ const PartnerCard = ({ partner }) => {
     return null;
   }
 
+  // Add this function
+  const handleUnfriend = async () => {
+    if (window.confirm("Are you sure you want to remove this partner?")) {
+      try {
+        await axios.delete(
+          `${import.meta.env.VITE_API_URL}/api/partners/${partner._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        toast.success("Partner removed successfully");
+        window.location.reload(); // Refresh to update the partners list
+      } catch (error) {
+        toast.error("Failed to remove partner");
+      }
+    }
+  };
+
   return (
     <>
       <motion.div
@@ -285,14 +366,25 @@ const PartnerCard = ({ partner }) => {
             <h4 className="font-bold">{partner.username}</h4>
             <p className="text-sm text-[#f5f5f7]/60">{partner.email}</p>
           </div>
-          <motion.button
-            className="bg-[#A2BFFE]/20 text-[#A2BFFE] px-4 py-2 rounded-md text-sm"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowChat(true)}
-          >
-            Message
-          </motion.button>
+          <div className="flex items-center">
+            <motion.button
+              className="bg-[#A2BFFE]/20 text-[#A2BFFE] px-4 py-2 rounded-md text-sm"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowChat(true)}
+            >
+              Message
+            </motion.button>
+            {/* Add this button */}
+            <motion.button
+              onClick={handleUnfriend}
+              className="ml-2 text-red-500 hover:text-red-600"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FaUserMinus />
+            </motion.button>
+          </div>
         </div>
       </motion.div>
       {showChat && (

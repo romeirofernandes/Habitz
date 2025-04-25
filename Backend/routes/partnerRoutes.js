@@ -13,8 +13,11 @@ router.post("/request/:id/decline", partnerController.declineRequest);
 router.get("/", partnerController.getPartners);
 router.get("/requests/pending", partnerController.getPendingRequests);
 
-// Chat routes
+// Update chat routes
 router.get("/chat/:partnerId", partnerController.getChatHistory);
-router.post("/chat/:partnerId", partnerController.sendMessage);
+router.post("/chat/:partnerId/messages", partnerController.sendMessage);
+
+// Add this new route
+router.get("/unread-counts", partnerController.getUnreadCounts);
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const AccountabilityPartner = require("../models/accountabilityPartner");
 const Chat = require("../models/chat");
+const Habit = require("../models/habitSchema");
 
 // Search for users
 exports.searchUsers = async (req, res) => {
@@ -140,15 +141,21 @@ exports.getPartners = async (req, res) => {
   }
 };
 
-// Get chat history
+// Update the getChatHistory function
 exports.getChatHistory = async (req, res) => {
   try {
     const { partnerId } = req.params;
+
+    // Find chat between users
     let chat = await Chat.findOne({
       participants: { $all: [req.user.id, partnerId] },
-    }).populate("messages.sender", "username");
+    }).populate({
+      path: "messages.sender",
+      select: "username _id",
+    });
 
     if (!chat) {
+      // Create new chat if it doesn't exist
       chat = new Chat({
         participants: [req.user.id, partnerId],
         messages: [],
@@ -156,13 +163,14 @@ exports.getChatHistory = async (req, res) => {
       await chat.save();
     }
 
-    res.json(chat);
+    res.json(chat.messages);
   } catch (error) {
+    console.error("Error getting chat history:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// Send message
+// Update the sendMessage function
 exports.sendMessage = async (req, res) => {
   try {
     const { partnerId } = req.params;
@@ -179,15 +187,152 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
-    chat.messages.push({
+    const newMessage = {
       sender: req.user.id,
       content,
-    });
-    chat.lastMessage = Date.now();
+      readBy: [req.user.id],
+      createdAt: new Date(),
+    };
+
+    chat.messages.push(newMessage);
     await chat.save();
 
-    res.status(201).json(chat);
+    // Populate the sender info before sending response
+    const populatedChat = await Chat.findById(chat._id).populate({
+      path: "messages.sender",
+      select: "username _id",
+    });
+
+    const sentMessage =
+      populatedChat.messages[populatedChat.messages.length - 1];
+    res.status(201).json(sentMessage);
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Add or update this function
+exports.getUnreadCounts = async (req, res) => {
+  try {
+    const chats = await Chat.find({
+      participants: req.user.id,
+    });
+
+    const unreadCounts = {};
+
+    for (const chat of chats) {
+      const partnerId = chat.participants
+        .find((p) => p.toString() !== req.user.id)
+        .toString();
+
+      const unreadMessages = chat.messages.filter(
+        (msg) =>
+          msg.sender.toString() !== req.user.id &&
+          !msg.readBy.includes(req.user.id)
+      ).length;
+
+      if (unreadMessages > 0) {
+        unreadCounts[partnerId] = unreadMessages;
+      }
+    }
+
+    res.json(unreadCounts);
+  } catch (error) {
+    console.error("Error getting unread counts:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Add new endpoint for unfriending
+exports.removePartner = async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+
+    const partnership = await AccountabilityPartner.findOne({
+      $or: [
+        { user: req.user.id, partner: partnerId },
+        { user: partnerId, partner: req.user.id },
+      ],
+      status: "accepted",
+    });
+
+    if (!partnership) {
+      return res.status(404).json({ message: "Partnership not found" });
+    }
+
+    await AccountabilityPartner.deleteOne({ _id: partnership._id });
+    await Chat.deleteOne({
+      participants: { $all: [req.user.id, partnerId] },
+    });
+
+    res.json({ message: "Partnership removed successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getPartnerProgress = async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+
+    // Verify partnership exists
+    const partnership = await AccountabilityPartner.findOne({
+      $or: [
+        { user: req.user.id, partner: partnerId },
+        { user: partnerId, partner: req.user.id },
+      ],
+      status: "accepted",
+    });
+
+    if (!partnership) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to view this user's progress" });
+    }
+
+    const habits = await Habit.find({ user: partnerId }).select(
+      "name description currentStreak longestStreak completedDates"
+    );
+
+    res.json(habits);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.sendAutomatedMessage = async (userId, partnerId, message) => {
+  try {
+    let chat = await Chat.findOne({
+      participants: { $all: [userId, partnerId] },
+    });
+
+    if (!chat) {
+      chat = new Chat({
+        participants: [userId, partnerId],
+        messages: [],
+      });
+    }
+
+    const automatedMessage = {
+      sender: userId,
+      content: message,
+      type: "automated",
+      readBy: [],
+      createdAt: new Date(),
+    };
+
+    chat.messages.push(automatedMessage);
+    await chat.save();
+
+    // Emit socket event for real-time updates
+    global.io
+      .to(chat._id.toString())
+      .emit("message-received", automatedMessage);
+
+    return automatedMessage;
+  } catch (error) {
+    console.error("Error sending automated message:", error);
+    throw error;
   }
 };

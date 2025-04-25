@@ -1,6 +1,9 @@
 const Habit = require("../models/habitSchema");
 const User = require("../models/user");
 const { scheduleReminders } = require("../services/reminderService");
+const {
+  notifyPartnerForMissedHabit,
+} = require("../services/notificationService");
 
 // Update the createHabit function
 exports.createHabit = async (req, res) => {
@@ -38,55 +41,41 @@ exports.getHabits = async (req, res) => {
 // Check/complete a habit
 exports.checkHabit = async (req, res) => {
   try {
-    const habit = await Habit.findOne({
-      _id: req.params.id,
-      user: req.user.id,
-    });
+    const habit = await Habit.findById(req.params.id);
 
     if (!habit) {
       return res.status(404).json({ message: "Habit not found" });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Check if habit was completed in last 30 seconds
+    const now = new Date();
+    const thirtySecondsAgo = new Date(now - 30000); // 30 seconds in milliseconds
 
-    const isCompletedToday = habit.completedDates.some((date) => {
+    const wasCompletedRecently = habit.completedDates.some((date) => {
       const completedDate = new Date(date);
-      completedDate.setHours(0, 0, 0, 0);
-      return completedDate.getTime() === today.getTime();
+      return completedDate >= thirtySecondsAgo;
     });
 
-    // If not already completed today
-    if (!isCompletedToday) {
-      habit.completedDates.push(new Date());
+    // Check if habit was completed in previous 30 seconds
+    const sixtySecondsAgo = new Date(now - 60000);
+    const wasCompletedPreviously = habit.completedDates.some((date) => {
+      const completedDate = new Date(date);
+      return (
+        completedDate >= sixtySecondsAgo && completedDate < thirtySecondsAgo
+      );
+    });
 
-      // Update streak
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-
-      const wasCompletedYesterday = habit.completedDates.some((date) => {
-        const completedDate = new Date(date);
-        completedDate.setHours(0, 0, 0, 0);
-        return completedDate.getTime() === yesterday.getTime();
-      });
-
-      if (wasCompletedYesterday || habit.currentStreak === 0) {
-        habit.currentStreak += 1;
-      } else {
-        habit.currentStreak = 1;
-      }
-
-      if (habit.currentStreak > habit.longestStreak) {
-        habit.longestStreak = habit.currentStreak;
-      }
-
-      await habit.save();
-      res.json({ ...habit.toObject(), completedToday: true });
-    } else {
-      res.json({ ...habit.toObject(), completedToday: true });
+    // If habit was missed and had a streak
+    if (
+      !wasCompletedRecently &&
+      !wasCompletedPreviously &&
+      habit.currentStreak > 0
+    ) {
+      await notifyPartnerForMissedHabit(req.user.id, habit.name);
     }
+
+    // ... rest of your existing code
   } catch (error) {
-    console.error("Check habit error:", error);
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
