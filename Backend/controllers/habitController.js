@@ -42,7 +42,7 @@ exports.getHabits = async (req, res) => {
 exports.getHabit = async (req, res) => {
   try {
     const habit = await Habit.findById(req.params.id);
-    
+
     if (!habit) {
       return res.status(404).json({ message: "Habit not found" });
     }
@@ -61,7 +61,7 @@ exports.getHabit = async (req, res) => {
 exports.updateHabit = async (req, res) => {
   try {
     let habit = await Habit.findById(req.params.id);
-    
+
     if (!habit) {
       return res.status(404).json({ message: "Habit not found" });
     }
@@ -92,7 +92,7 @@ exports.updateHabit = async (req, res) => {
 exports.deleteHabit = async (req, res) => {
   try {
     const habit = await Habit.findById(req.params.id);
-    
+
     if (!habit) {
       return res.status(404).json({ message: "Habit not found" });
     }
@@ -112,7 +112,7 @@ exports.deleteHabit = async (req, res) => {
 exports.completeHabit = async (req, res) => {
   try {
     const habit = await Habit.findById(req.params.id);
-    
+
     if (!habit) {
       return res.status(404).json({ message: "Habit not found" });
     }
@@ -121,18 +121,36 @@ exports.completeHabit = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    // Add current date to completedDates
+    // Check if already completed today
     const today = new Date();
+    const alreadyCompleted = habit.completedDates.some((date) => {
+      const d = new Date(date);
+      return (
+        d.getDate() === today.getDate() &&
+        d.getMonth() === today.getMonth() &&
+        d.getFullYear() === today.getFullYear()
+      );
+    });
+
+    if (alreadyCompleted) {
+      return res
+        .status(400)
+        .json({ message: "Already completed today", completedToday: true });
+    }
+
+    // Add current date to completedDates
     habit.completedDates.push(today);
 
     // Update streak
-    const lastCompletedDate = habit.completedDates[habit.completedDates.length - 2];
+    const lastCompletedDate =
+      habit.completedDates[habit.completedDates.length - 2];
     const oneDayInMs = 24 * 60 * 60 * 1000;
-    
-    if (lastCompletedDate && 
-        (today - new Date(lastCompletedDate)) <= oneDayInMs) {
+
+    if (
+      lastCompletedDate &&
+      today - new Date(lastCompletedDate) <= oneDayInMs
+    ) {
       habit.currentStreak += 1;
-      // Update longest streak if current streak is longer
       if (habit.currentStreak > habit.longestStreak) {
         habit.longestStreak = habit.currentStreak;
       }
@@ -142,7 +160,7 @@ exports.completeHabit = async (req, res) => {
 
     await habit.save();
 
-    res.json(habit);
+    res.json({ ...habit.toObject(), completedToday: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
