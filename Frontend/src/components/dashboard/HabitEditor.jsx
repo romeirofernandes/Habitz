@@ -3,9 +3,11 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import ConfirmationModal from "../ConfirmationModal"
 
 const HabitEditor = ({ habit, onUpdate, onClose }) => {
   const [loading, setLoading] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [editedHabit, setEditedHabit] = useState({
     name: habit.name,
     description: habit.description || "",
@@ -46,8 +48,11 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this habit?")) return;
-    
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDelete = async () => {
+    setShowDeleteConfirmation(false);
     setLoading(true);
 
     try {
@@ -251,6 +256,17 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
           </div>
         </form>
       </motion.div>
+
+      <ConfirmationModal
+        isOpen={showDeleteConfirmation}
+        onClose={() => setShowDeleteConfirmation(false)}
+        onConfirm={confirmDelete}
+        title="Delete Habit"
+        message="Are you sure you want to delete this habit? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

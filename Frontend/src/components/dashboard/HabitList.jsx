@@ -11,6 +11,8 @@ import QRCodeGenerator from "../QR/QRCodeGenerator";
 const HabitList = ({ habits, onHabitUpdate }) => {
   const [justCompleted, setJustCompleted] = useState(null);
   const [editingHabit, setEditingHabit] = useState(null);
+  const [completingHabitId, setCompletingHabitId] = useState(null);
+
   const habitArray = Array.isArray(habits) ? habits : [];
   const [selectedHabit, setSelectedHabit] = useState(null);
   const [showQRGenerator, setShowQRGenerator] = useState(false);
@@ -55,11 +57,12 @@ const HabitList = ({ habits, onHabitUpdate }) => {
   }, [makeShot]);
 
   const handleCheck = async (habitId) => {
+    setCompletingHabitId(habitId);
     const habit = habits.find((h) => h._id === habitId);
 
-    // Prevent checking if already completed today
     if (habit.completedToday) {
       toast.info("You've already completed this habit today!");
+      setCompletingHabitId(null);
       return;
     }
 
@@ -76,25 +79,23 @@ const HabitList = ({ habits, onHabitUpdate }) => {
       );
 
       if (response.data.completedToday) {
-        // Trigger confetti and visual feedback
         fire();
         setJustCompleted(habitId);
         setTimeout(() => setJustCompleted(null), 2000);
 
-        // Update parent component state
+        // Optimistically update UI
         onHabitUpdate();
         toast.success("Habit completed! 🎉");
       }
     } catch (error) {
-      console.error("Error completing habit:", error);
       if (error.response?.status === 400) {
-        // Handle already completed case
         toast.info("This habit was already completed today!");
-        // Force refresh to sync with server state
         onHabitUpdate();
       } else {
         toast.error("Failed to update habit");
       }
+    } finally {
+      setCompletingHabitId(null);
     }
   };
 
@@ -126,7 +127,7 @@ const HabitList = ({ habits, onHabitUpdate }) => {
           <div className="flex items-center gap-4">
             <motion.button
               onClick={() => handleCheck(habit._id)}
-              disabled={habit.completedToday}
+              disabled={habit.completedToday || completingHabitId === habit._id}
               className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
                 ${
                   habit.completedToday

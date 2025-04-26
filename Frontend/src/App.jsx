@@ -81,10 +81,7 @@ function App() {
           element={
             <ProtectedRoute>
               <Sidebar>
-                <UserProfile
-                  userId={userId}
-                  isOwnProfile={true}
-                />
+                <UserProfile userId={userId} isOwnProfile={true} />
               </Sidebar>
             </ProtectedRoute>
           }
@@ -109,9 +106,18 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
       </Routes>
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        theme="dark"
+        toastStyle={{
+          background: "#18181b",
+          color: "#f5f5f7",
+          borderRadius: "12px",
+          border: "1px solid #222",
+        }}
+      />
     </BrowserRouter>
   );
 }
