@@ -1,60 +1,24 @@
 import React from "react";
 
-export default function Legend({ habits, getColor }) {
+export default function Legend() {
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 20,
-        right: 30,
-        background: "rgba(255,255,255,0.85)",
-        borderRadius: 12,
-        padding: "16px 20px",
-        boxShadow: "0 4px 24px 0 rgba(0,0,0,0.13)",
-        color: "#2F4F4F",
-        zIndex: 10,
-        minWidth: 180,
-        border: "2px solid #006400",
-      }}
-    >
-      <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 16 }}>
-        Habit Legend
-      </div>
-      {habits.map((habit, idx) => (
-        <div
-          key={habit._id || idx}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginBottom: 6,
-            fontSize: 14,
-          }}
-        >
-          <span
-            style={{
-              display: "inline-block",
-              width: 16,
-              height: 16,
-              borderRadius: "50%",
-              background: getColor(idx),
-              marginRight: 10,
-              border: "2px solid #006400",
-              boxShadow: "0 0 4px " + getColor(idx),
-            }}
-          />
-          <span
-            style={{
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {habit.name}
-          </span>
+    <div className="bg-gradient-to-r from-emerald-600/80 to-teal-600/80 backdrop-blur-md rounded-lg p-3 text-white shadow-lg border border-emerald-400/30 max-w-[200px]">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-6 h-6 text-xl flex items-center justify-center bg-white/20 rounded-full">
+          🌱
         </div>
-      ))}
-      <div style={{ fontSize: 12, marginTop: 8, color: "#228B22" }}>
-        <span style={{ fontWeight: 700 }}>Glow</span> = 10+ day streak!
+        <span className="font-semibold text-sm">Tree Growth</span>
+      </div>
+      
+      <p className="text-xs leading-relaxed">
+        Keep your habits going! The longer your streak, the taller your trees will grow.
+      </p>
+      
+      <div className="mt-3 flex items-center text-xs border-t border-white/20 pt-2">
+        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"></path>
+        </svg>
+        <span className="opacity-80">Reach 50 days for giant trees!</span>
       </div>
     </div>
   );
