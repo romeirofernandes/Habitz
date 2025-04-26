@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
 import ParticipantsList from "../components/Challenges/ParticipantsList";
+import QRCodeGenerator from "../components/QR/QRCodeGenerator";
+import QRCodeScanner from "../components/QR/QRCodeScanner";
+
 
 const Challenges = () => {
   const [activeTab, setActiveTab] = useState("explore");
@@ -15,6 +18,9 @@ const Challenges = () => {
   const [customProgressValues, setCustomProgressValues] = useState({}); // Add this state for tracking individual progress inputs
   const [progressErrors, setProgressErrors] = useState({}); // Add state to track validation errors
   const [selectedChallengeId, setSelectedChallengeId] = useState(""); // Added missing state for selected challenge
+  const [showQRGenerator, setShowQRGenerator] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
   
   // Form states
   const [formData, setFormData] = useState({
@@ -277,7 +283,19 @@ socket.onmessage = (event) => {
             Create Challenge
           </motion.button>
         </div>
-
+        <div className="flex gap-2">
+  <motion.button
+    onClick={() => setShowQRScanner(true)}
+    className="bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-4 py-2.5 rounded-lg text-sm flex items-center gap-2"
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+  >
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+    </svg>
+    Scan QR
+  </motion.button>
+</div>
         {/* Tabs - Only showing main tabs */}
         <div className="flex gap-4 mb-6 border-b border-[#222]">
           {["explore", "my-challenges", "live-updates"].map((tab) => (
@@ -359,7 +377,19 @@ socket.onmessage = (event) => {
                           <span className="mr-1">👥</span> {challenge.participants.length} participants
                         </button>
                       </div>
-                      
+                      <motion.button 
+  onClick={(e) => {
+    e.stopPropagation();
+    setSelectedItem(challenge);
+    setShowQRGenerator(true);
+  }}
+  className="text-xs bg-[#222] px-2 py-1 rounded-full text-[#f5f5f7]/60 cursor-pointer hover:bg-[#333] flex items-center"
+>
+  <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+  </svg>
+  QR Code
+</motion.button>
                       {isParticipant ? (
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-[#A2BFFE]">You've joined</span>
@@ -740,6 +770,32 @@ socket.onmessage = (event) => {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* QR Code Generator Modal */}
+<AnimatePresence>
+  {showQRGenerator && selectedItem && (
+    <QRCodeGenerator 
+      type="challenge" 
+      item={selectedItem} 
+      onClose={() => {
+        setShowQRGenerator(false);
+        setSelectedItem(null);
+      }} 
+    />
+  )}
+</AnimatePresence>
+
+{/* QR Code Scanner Modal */}
+<AnimatePresence>
+  {showQRScanner && (
+    <QRCodeScanner 
+      onClose={() => setShowQRScanner(false)} 
+      onSuccess={(data) => {
+        // Refresh data after successful scan
+        fetchChallenges();
+      }} 
+    />
+  )}
+</AnimatePresence>
     </div>
   );
 };
