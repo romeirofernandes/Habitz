@@ -7,7 +7,10 @@ const auth = require("../middleware/auth");
 router.use(auth);
 
 router.get("/", habitController.getHabits);
+router.get("/:id", habitController.getHabit);
 router.post("/", habitController.createHabit);
-router.post("/:id/complete", auth, habitController.completeHabit);
+router.put("/:id", habitController.updateHabit);
+router.delete("/:id", habitController.deleteHabit);
+router.post("/:id/complete", habitController.completeHabit);
 
 module.exports = router;

@@ -38,10 +38,11 @@ exports.getHabits = async (req, res) => {
   }
 };
 
-exports.completeHabit = async (req, res) => {
+// Get a single habit
+exports.getHabit = async (req, res) => {
   try {
     const habit = await Habit.findById(req.params.id);
-
+    
     if (!habit) {
       return res.status(404).json({ message: "Habit not found" });
     }
@@ -50,32 +51,98 @@ exports.completeHabit = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    res.json(habit);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-    // Check if already completed today
-    const completedToday = habit.completedDates.some((date) => {
-      const completedDate = new Date(date);
-      return completedDate.toDateString() === today.toDateString();
-    });
-
-    if (completedToday) {
-      return res.status(400).json({
-        message: "Habit already completed today",
-        completedToday: true,
-      });
+// Update a habit
+exports.updateHabit = async (req, res) => {
+  try {
+    let habit = await Habit.findById(req.params.id);
+    
+    if (!habit) {
+      return res.status(404).json({ message: "Habit not found" });
     }
 
-    // Add completion and update streak
+    if (habit.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    habit = await Habit.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body },
+      { new: true }
+    );
+
+    // Update reminders if reminder settings changed
+    if (req.body.reminderSettings) {
+      const user = await User.findById(req.user.id);
+      await scheduleReminders(habit, user);
+    }
+
+    res.json(habit);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Delete a habit
+exports.deleteHabit = async (req, res) => {
+  try {
+    const habit = await Habit.findById(req.params.id);
+    
+    if (!habit) {
+      return res.status(404).json({ message: "Habit not found" });
+    }
+
+    if (habit.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    await habit.deleteOne();
+    res.json({ message: "Habit deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Complete a habit
+exports.completeHabit = async (req, res) => {
+  try {
+    const habit = await Habit.findById(req.params.id);
+    
+    if (!habit) {
+      return res.status(404).json({ message: "Habit not found" });
+    }
+
+    if (habit.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Add current date to completedDates
+    const today = new Date();
     habit.completedDates.push(today);
-    habit.currentStreak += 1;
-    habit.longestStreak = Math.max(habit.longestStreak, habit.currentStreak);
+
+    // Update streak
+    const lastCompletedDate = habit.completedDates[habit.completedDates.length - 2];
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+    
+    if (lastCompletedDate && 
+        (today - new Date(lastCompletedDate)) <= oneDayInMs) {
+      habit.currentStreak += 1;
+      // Update longest streak if current streak is longer
+      if (habit.currentStreak > habit.longestStreak) {
+        habit.longestStreak = habit.currentStreak;
+      }
+    } else {
+      habit.currentStreak = 1;
+    }
+
     await habit.save();
 
-    res.json({
-      ...habit.toObject(),
-      completedToday: true,
-    });
+    res.json(habit);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

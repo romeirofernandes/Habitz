@@ -4,9 +4,11 @@ import { format } from "date-fns";
 import axios from "axios";
 import { toast } from "react-toastify";
 import ReactCanvasConfetti from "react-canvas-confetti";
+import HabitEditor from "./HabitEditor"; // Add this import
 
 const HabitList = ({ habits, onHabitUpdate }) => {
   const [justCompleted, setJustCompleted] = useState(null);
+  const [editingHabit, setEditingHabit] = useState(null);
   const habitArray = Array.isArray(habits) ? habits : [];
 
   const confettiRef = useRef(null);
@@ -101,6 +103,12 @@ const HabitList = ({ habits, onHabitUpdate }) => {
     return a.completedToday ? 1 : -1;
   });
 
+  // Add this function to handle edit button click
+  const handleEdit = (habit) => {
+    setEditingHabit(habit);
+  };
+
+  // Modify the return statement to include the edit button and editor modal
   return (
     <div className="space-y-4">
       {sortedHabits.map((habit) => (
@@ -162,16 +170,51 @@ const HabitList = ({ habits, onHabitUpdate }) => {
             </div>
           </div>
 
-          <div className="text-sm text-[#f5f5f7]/60">
-            <span className="font-medium text-[#A2BFFE]">
-              {habit.currentStreak}
-            </span>{" "}
-            day streak
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-[#f5f5f7]/60">
+              <span className="font-medium text-[#A2BFFE]">
+                {habit.currentStreak}
+              </span>{" "}
+              day streak
+            </div>
+
+            <motion.button
+              onClick={() => handleEdit(habit)}
+              className="p-2 hover:bg-[#111] rounded-lg transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg
+                className="w-4 h-4 text-[#f5f5f7]/60"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                />
+              </svg>
+            </motion.button>
           </div>
         </motion.div>
       ))}
 
-      {/* Confetti effect */}
+      {/* Add the HabitEditor modal */}
+      {editingHabit && (
+        <HabitEditor
+          habit={editingHabit}
+          onUpdate={() => {
+            onHabitUpdate();
+            setEditingHabit(null);
+          }}
+          onClose={() => setEditingHabit(null)}
+        />
+      )}
+
+      {/* Existing confetti component */}
       <ReactCanvasConfetti
         ref={confettiRef}
         style={{
