@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { format } from "date-fns";
-import { Link } from "react-router-dom";
+import HabitForest3D from "../components/dashboard/HabitForest3D";
 import HabitForm from "../components/dashboard/HabitForm";
 import HabitList from "../components/dashboard/HabitList";
 import StreaksList from "../components/dashboard/StreaksList";
@@ -90,29 +89,29 @@ const Dashboard = () => {
   const generateRecommendations = async () => {
     // Skip if we don't have habits or already loading
     if (habits.length === 0 || loadingRecommendations) return;
-    
+
     setLoadingRecommendations(true);
-    
+
     try {
       // Format the habits data for the API request
-      const habitNames = habits.map(h => h.name);
-      const habitCategories = [...new Set(habits.map(h => h.category))];
-      const timePreferences = habits.map(h => h.timeOfDay);
-      
+      const habitNames = habits.map((h) => h.name);
+      const habitCategories = [...new Set(habits.map((h) => h.category))];
+      const timePreferences = habits.map((h) => h.timeOfDay);
+
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/recommendations`,
         {
-          existingHabits: habitNames, 
+          existingHabits: habitNames,
           categories: habitCategories,
-          timePreferences: timePreferences
+          timePreferences: timePreferences,
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          }
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
       );
-      
+
       setRecommendations(response.data);
     } catch (error) {
       console.error("Error generating recommendations:", error);
@@ -123,42 +122,42 @@ const Dashboard = () => {
           title: "Drink a glass of water",
           recommendation: "Adding water intake could boost your productivity.",
           timeOfDay: "08:00",
-          icon: "💧"
+          icon: "💧",
         },
         {
           category: "productivity",
           title: "5-minute journal",
           recommendation: "Consider a short journaling session to reflect.",
           timeOfDay: "21:00",
-          icon: "📝"
+          icon: "📝",
         },
         {
           category: "self-care",
           title: "2-minute meditation",
           recommendation: "Start small with just 2 minutes of meditation.",
           timeOfDay: "07:30",
-          icon: "🧘"
-        }
+          icon: "🧘",
+        },
       ]);
     } finally {
       setLoadingRecommendations(false);
     }
   };
-  
+
   const handleAddRecommendation = async (habitData) => {
     try {
       const token = localStorage.getItem("token");
-      
+
       // First check if this exact habit already exists
-      const habitExists = habits.some(h => 
-        h.name.toLowerCase() === habitData.name.toLowerCase()
+      const habitExists = habits.some(
+        (h) => h.name.toLowerCase() === habitData.name.toLowerCase()
       );
-      
+
       if (habitExists) {
         toast.info("This habit already exists in your list!");
         return;
       }
-      
+
       // Create the new habit via API
       await axios.post(
         `${import.meta.env.VITE_API_URL}/api/habits`,
@@ -169,7 +168,7 @@ const Dashboard = () => {
           },
         }
       );
-      
+
       // Refresh the habits list
       fetchHabits();
       toast.success("Habit added successfully!");
@@ -231,18 +230,14 @@ const Dashboard = () => {
             title="Current Streak"
             value={`${stats.currentStreak} days`}
             icon="🔥"
-            isStreak={true}  
+            isStreak={true}
           />
           <StatsCard
             title="Completion Rate"
             value={`${stats.completionRate}%`}
             icon="📊"
           />
-          <StatsCard 
-            title="Total Habits" 
-            value={stats.totalHabits} 
-            icon="✨" 
-          />
+          <StatsCard title="Total Habits" value={stats.totalHabits} icon="✨" />
         </div>
 
         {/* Error State */}
@@ -276,56 +271,62 @@ const Dashboard = () => {
         )}
 
         {/* After Stats Cards */}
-        <div className="flex gap-4 mb-6 border-b border-[#222]">
-          {["habits", "streaks", "recommendations"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`pb-2 px-1 relative ${
-                activeTab === tab
-                  ? "text-[#A2BFFE]"
-                  : "text-[#f5f5f7]/60 hover:text-[#f5f5f7]"
-              }`}
-            >
-              {tab === "habits" 
-                ? "Daily Habits" 
-                : tab === "streaks" 
-                  ? "Streak Stats" 
-                  : "For You"}
-              {activeTab === tab && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#A2BFFE]"
-                />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Content based on active tab */}
         {!error && habits.length > 0 && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              {activeTab === "habits" ? (
-                <HabitList habits={habits} onHabitUpdate={fetchHabits} />
-              ) : activeTab === "streaks" ? (
-                <StreaksList habits={habits} />
-              ) : (
-                <HabitRecommendations 
-                  onAddHabit={handleAddRecommendation} 
-                  recommendations={recommendations}
-                  loading={loadingRecommendations}
-                  onRefresh={generateRecommendations}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
+          <>
+            <div className="flex gap-4 mb-6 border-b border-[#222]">
+              {["habits", "streaks", "recommendations", "forest"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`pb-2 px-1 relative ${
+                    activeTab === tab
+                      ? "text-[#A2BFFE]"
+                      : "text-[#f5f5f7]/60 hover:text-[#f5f5f7]"
+                  }`}
+                >
+                  {tab === "habits"
+                    ? "Daily Habits"
+                    : tab === "streaks"
+                    ? "Streak Stats"
+                    : tab === "recommendations"
+                    ? "For You"
+                    : "Habit Forest"}
+                  {activeTab === tab && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#A2BFFE]"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Content based on active tab */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {activeTab === "habits" ? (
+                  <HabitList habits={habits} onHabitUpdate={fetchHabits} />
+                ) : activeTab === "streaks" ? (
+                  <StreaksList habits={habits} />
+                ) : activeTab === "recommendations" ? (
+                  <HabitRecommendations
+                    onAddHabit={handleAddRecommendation}
+                    recommendations={recommendations}
+                    loading={loadingRecommendations}
+                    onRefresh={generateRecommendations}
+                  />
+                ) : (
+                  <HabitForest3D habits={habits} />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </>
         )}
 
         {/* Create Habit Modal */}
