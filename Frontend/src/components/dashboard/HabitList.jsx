@@ -5,6 +5,8 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import ReactCanvasConfetti from "react-canvas-confetti";
 import HabitEditor from "./HabitEditor"; // Add this import
+import { AnimatePresence } from "framer-motion";
+import QRCodeGenerator from "../QR/QRCodeGenerator";
 
 const HabitList = ({ habits, onHabitUpdate }) => {
   const [justCompleted, setJustCompleted] = useState(null);
@@ -12,6 +14,8 @@ const HabitList = ({ habits, onHabitUpdate }) => {
   const [completingHabitId, setCompletingHabitId] = useState(null);
 
   const habitArray = Array.isArray(habits) ? habits : [];
+  const [selectedHabit, setSelectedHabit] = useState(null);
+  const [showQRGenerator, setShowQRGenerator] = useState(false);
 
   const confettiRef = useRef(null);
 
@@ -178,7 +182,18 @@ const HabitList = ({ habits, onHabitUpdate }) => {
               </span>{" "}
               day streak
             </div>
-
+            <motion.button
+  onClick={(e) => {
+    e.stopPropagation();
+    setSelectedHabit(habit);
+    setShowQRGenerator(true);
+  }}
+  className="ml-2 p-1 rounded-full hover:bg-[#222] text-[#f5f5f7]/60"
+>
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+  </svg>
+</motion.button>
             <motion.button
               onClick={() => handleEdit(habit)}
               className="p-2 hover:bg-[#111] rounded-lg transition-colors"
@@ -228,6 +243,19 @@ const HabitList = ({ habits, onHabitUpdate }) => {
           zIndex: 999,
         }}
       />
+
+<AnimatePresence>
+        {showQRGenerator && selectedHabit && (
+          <QRCodeGenerator 
+            type="habit" 
+            item={selectedHabit} 
+            onClose={() => {
+              setShowQRGenerator(false);
+              setSelectedHabit(null);
+            }} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

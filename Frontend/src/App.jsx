@@ -14,6 +14,7 @@ import Achievements from "./pages/Acievements";
 import UserProfile from "./components/dashboard/Profile";
 import HabitVisualizer from "./pages/HabitVisualizer";
 import Challenges from "./pages/Challenges";
+import CoachPage from "./pages/CoachPage";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -106,7 +107,19 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Add coach route */}
+        <Route
+          path="/coach"
+          element={
+            <ProtectedRoute>
+              <Sidebar>
+                <CoachPage />
+              </Sidebar>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
+
       <ToastContainer
         position="top-right"
         autoClose={2000}
