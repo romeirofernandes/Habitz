@@ -3,8 +3,13 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
 import mermaid from "mermaid";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 const HabitVisualizer = () => {
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    visualizationId: null,
+  });
   const [habitName, setHabitName] = useState("");
   const [habitDescription, setHabitDescription] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,36 +21,36 @@ const HabitVisualizer = () => {
   const [showCode, setShowCode] = useState(false);
   const mermaidRef = useRef(null);
   // Add at the top with other useState
-const [forecast, setForecast] = useState(null);
-const [forecastLoading, setForecastLoading] = useState(false);
-const [showForecast, setShowForecast] = useState(false);
+  const [forecast, setForecast] = useState(null);
+  const [forecastLoading, setForecastLoading] = useState(false);
+  const [showForecast, setShowForecast] = useState(false);
 
-// Handler to fetch forecast
-const handleForecast = async () => {
-  setForecastLoading(true);
-  setShowForecast(true);
-  try {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/forecast/habit`,
-      {
-        habitName,
-        habitDescription,
-        mermaidCode
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+  // Handler to fetch forecast
+  const handleForecast = async () => {
+    setForecastLoading(true);
+    setShowForecast(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/forecast/habit`,
+        {
+          habitName,
+          habitDescription,
+          mermaidCode,
         },
-      }
-    );
-    setForecast(response.data);
-  } catch (err) {
-    setForecast({ error: "Could not fetch forecast." });
-  } finally {
-    setForecastLoading(false);
-  }
-};
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setForecast(response.data);
+    } catch (err) {
+      setForecast({ error: "Could not fetch forecast." });
+    } finally {
+      setForecastLoading(false);
+    }
+  };
   const generateFallbackDiagram = (habitName) => {
     return `flowchart TD
       main["${habitName.replace(/"/g, "'")}"] :::habitStyle
@@ -95,7 +100,7 @@ const handleForecast = async () => {
       securityLevel: "loose",
       fontFamily: "Inter, sans-serif",
     });
-    
+
     if (activeTab === "saved") {
       fetchVisualizations();
     }
@@ -109,24 +114,28 @@ const handleForecast = async () => {
 
   const renderMermaidDiagram = () => {
     if (!mermaidRef.current) return;
-    
+
     try {
-      mermaidRef.current.innerHTML = '';
-      
+      mermaidRef.current.innerHTML = "";
+
       // Pre-process the mermaid code to fix common syntax errors
       let fixedCode = mermaidCode;
-      
+
       // Fix 1: Ensure flowchart declaration is present and correct
-      if (!fixedCode.trim().startsWith('flowchart TD')) {
-        fixedCode = 'flowchart TD\n' + fixedCode.replace(/^flowchart\s+[^\n]+\n/, '');
+      if (!fixedCode.trim().startsWith("flowchart TD")) {
+        fixedCode =
+          "flowchart TD\n" + fixedCode.replace(/^flowchart\s+[^\n]+\n/, "");
       }
-      
+
       // Fix 2: Correct "id1end" type issues by inserting a space
-      fixedCode = fixedCode.replace(/(\w+)end\b/g, '$1 end');
-      
+      fixedCode = fixedCode.replace(/(\w+)end\b/g, "$1 end");
+
       // Fix 3: Fix the style class syntax (:::style to class=style)
-      fixedCode = fixedCode.replace(/(\w+)\["([^"]+)"\]\s*:::\s*(\w+)/g, '$1["$2"]');
-      
+      fixedCode = fixedCode.replace(
+        /(\w+)\["([^"]+)"\]\s*:::\s*(\w+)/g,
+        '$1["$2"]'
+      );
+
       // Extract all these classes to apply them at the end
       const classMatches = [];
       const classRegex = /(\w+)\["([^"]+)"\]\s*:::\s*(\w+)/g;
@@ -134,41 +143,45 @@ const handleForecast = async () => {
       while ((match = classRegex.exec(mermaidCode)) !== null) {
         classMatches.push({ id: match[1], className: match[3] });
       }
-      
-      // Fix 4: Fix arrow connections with unusual formatting
-      fixedCode = fixedCode.replace(/(\w+)\s*-->\s*_(\w+)/g, '$1 --> $2');
-      // Remove :::style from node definitions
-fixedCode = fixedCode.replace(/:::\w+/g, '');
 
-// Fix multi-node class assignments (split by comma or space)
-fixedCode = fixedCode.replace(/^class\s+([^\n]+?)\s+(\w+)\s*$/gm, (match, ids, style) => {
-  // ids can be comma or space separated
-  // After removing :::style, add class assignments for each node
-const nodeClassRegex = /(\w+)\["[^"]*"\]\s*:::\s*(\w+)/g;
-let match1;
-let classAssignments = '';
-while ((match1 = nodeClassRegex.exec(mermaidCode)) !== null) {
-  classAssignments += `class ${match1[1]} ${match1[3]}\n`;
-}
-fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
-  return ids
-    .split(/[,\s]+/)
-    .filter(Boolean)
-    .map(id => `class ${id} ${style}`)
-    .join('\n');
-});
+      // Fix 4: Fix arrow connections with unusual formatting
+      fixedCode = fixedCode.replace(/(\w+)\s*-->\s*_(\w+)/g, "$1 --> $2");
+      // Remove :::style from node definitions
+      fixedCode = fixedCode.replace(/:::\w+/g, "");
+
+      // Fix multi-node class assignments (split by comma or space)
+      fixedCode = fixedCode.replace(
+        /^class\s+([^\n]+?)\s+(\w+)\s*$/gm,
+        (match, ids, style) => {
+          // ids can be comma or space separated
+          // After removing :::style, add class assignments for each node
+          const nodeClassRegex = /(\w+)\["[^"]*"\]\s*:::\s*(\w+)/g;
+          let match1;
+          let classAssignments = "";
+          while ((match1 = nodeClassRegex.exec(mermaidCode)) !== null) {
+            classAssignments += `class ${match1[1]} ${match1[3]}\n`;
+          }
+          fixedCode =
+            fixedCode.replace(/:::\w+/g, "") + "\n" + classAssignments;
+          return ids
+            .split(/[,\s]+/)
+            .filter(Boolean)
+            .map((id) => `class ${id} ${style}`)
+            .join("\n");
+        }
+      );
       // Fix 5: Handle duplicate node definitions
       const definedNodes = new Set();
-      const lines = fixedCode.split('\n');
+      const lines = fixedCode.split("\n");
       const cleanedLines = [];
-      
+
       for (const line of lines) {
         // Skip empty lines
         if (!line.trim()) continue;
-        
+
         // Check for node definitions like id1["Label"]
         const nodeMatch = line.match(/^\s*(\w+)\["([^"]+)"\]/);
-        
+
         if (nodeMatch) {
           const nodeId = nodeMatch[1];
           if (definedNodes.has(nodeId)) {
@@ -177,31 +190,31 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
           }
           definedNodes.add(nodeId);
         }
-        
+
         // Check for malformed closing tags
-        if (line.trim() === 'end}' || line.trim() === '}end') {
-          cleanedLines.push('end');
+        if (line.trim() === "end}" || line.trim() === "}end") {
+          cleanedLines.push("end");
           continue;
         }
-        
+
         cleanedLines.push(line);
       }
-      
-      fixedCode = cleanedLines.join('\n');
-      
+
+      fixedCode = cleanedLines.join("\n");
+
       // Fix 6: Check and fix subgraph/end balance
       const subgraphCount = (fixedCode.match(/subgraph/g) || []).length;
       const endCount = (fixedCode.match(/end(\s|$)/g) || []).length;
-      
+
       if (subgraphCount > endCount) {
         for (let i = 0; i < subgraphCount - endCount; i++) {
-          fixedCode += '\nend';
+          fixedCode += "\nend";
         }
       }
-      
+
       // Fix 7: Add class definitions at the end if no style declarations exist
-      let hasClassDefs = fixedCode.includes('classDef');
-      
+      let hasClassDefs = fixedCode.includes("classDef");
+
       if (!hasClassDefs) {
         fixedCode += `
         classDef habitStyle fill:#9333EA,color:#fff,stroke:#7E22CE,stroke-width:2px
@@ -210,26 +223,26 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
         classDef rewardStyle fill:#F59E0B,color:#fff,stroke:#D97706,stroke-width:1px
         classDef obstacleStyle fill:#EF4444,color:#fff,stroke:#DC2626,stroke-width:1px`;
       }
-      
+
       // Fix 8: Fix multi-node class assignments (separate them)
       const classLines = [];
       const nonClassLines = [];
-      
+
       // Split code into class definitions and everything else
-      fixedCode.split('\n').forEach(line => {
+      fixedCode.split("\n").forEach((line) => {
         const classMatch = line.trim().match(/^class\s+(.+)/);
         if (classMatch) {
           // Found a class assignment line
           const classList = classMatch[1].trim();
-          
+
           // Check if it has multiple nodes (by looking for spaces before style name)
           if (/\w+\s+\w+\s+\w+/.test(classList)) {
             // Extract the style name (last word) and node IDs (all previous words)
             const parts = classList.split(/\s+/);
             const styleName = parts.pop(); // Last element is the style name
-            
+
             // Create separate class assignments for each node
-            parts.forEach(nodeId => {
+            parts.forEach((nodeId) => {
               classLines.push(`class ${nodeId} ${styleName}`);
             });
           } else {
@@ -241,71 +254,81 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
           nonClassLines.push(line);
         }
       });
-      
+
       // Reconstruct the code with fixed class assignments
-      fixedCode = nonClassLines.join('\n') + '\n' + classLines.join('\n');
-      
+      fixedCode = nonClassLines.join("\n") + "\n" + classLines.join("\n");
+
       // Final fix for any other style issues
-      fixedCode = fixedCode.replace(/:::(\w+)/g, '');
-      
+      fixedCode = fixedCode.replace(/:::(\w+)/g, "");
+
       console.log("Rendering mermaid with fixed code:", fixedCode);
-      
+
       mermaid.contentLoaded();
-      
+
       // Use a random ID to avoid collisions across render attempts
-      const diagramId = `mermaid-svg-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-      
-      mermaid.render(diagramId, fixedCode).then(({ svg }) => {
-        if (mermaidRef.current) {
-          mermaidRef.current.innerHTML = svg;
-          
-          // Make the SVG larger
-          const svgElement = mermaidRef.current.querySelector('svg');
-          if (svgElement) {
-            svgElement.style.width = '100%';
-            svgElement.style.height = 'auto';
-            svgElement.style.minHeight = '500px';
-            svgElement.style.maxHeight = '700px';
-          }
-        }
-      }).catch(error => {
-        console.error("Mermaid render error:", error);
-        
-        // If rendering fails even with fixes, fall back to a simple diagram
-        const fallbackCode = generateFallbackDiagram(habitName);
-        
-        mermaid.render(`fallback-${Date.now()}`, fallbackCode).then(({ svg }) => {
+      const diagramId = `mermaid-svg-${Date.now()}-${Math.floor(
+        Math.random() * 10000
+      )}`;
+
+      mermaid
+        .render(diagramId, fixedCode)
+        .then(({ svg }) => {
           if (mermaidRef.current) {
             mermaidRef.current.innerHTML = svg;
-            
-            // Add a note about the fallback
-            const noteDiv = document.createElement('div');
-            noteDiv.className = 'py-2 px-3 bg-amber-100 text-amber-800 text-xs rounded mt-2';
-            noteDiv.innerText = 'Using simplified visualization due to syntax issues in the generated diagram.';
-            mermaidRef.current.appendChild(noteDiv);
-            
+
             // Make the SVG larger
-            const svgElement = mermaidRef.current.querySelector('svg');
+            const svgElement = mermaidRef.current.querySelector("svg");
             if (svgElement) {
-              svgElement.style.width = '100%';
-              svgElement.style.height = 'auto';
-              svgElement.style.minHeight = '500px';
+              svgElement.style.width = "100%";
+              svgElement.style.height = "auto";
+              svgElement.style.minHeight = "500px";
+              svgElement.style.maxHeight = "700px";
             }
           }
+        })
+        .catch((error) => {
+          console.error("Mermaid render error:", error);
+
+          // If rendering fails even with fixes, fall back to a simple diagram
+          const fallbackCode = generateFallbackDiagram(habitName);
+
+          mermaid
+            .render(`fallback-${Date.now()}`, fallbackCode)
+            .then(({ svg }) => {
+              if (mermaidRef.current) {
+                mermaidRef.current.innerHTML = svg;
+
+                // Add a note about the fallback
+                const noteDiv = document.createElement("div");
+                noteDiv.className =
+                  "py-2 px-3 bg-amber-100 text-amber-800 text-xs rounded mt-2";
+                noteDiv.innerText =
+                  "Using simplified visualization due to syntax issues in the generated diagram.";
+                mermaidRef.current.appendChild(noteDiv);
+
+                // Make the SVG larger
+                const svgElement = mermaidRef.current.querySelector("svg");
+                if (svgElement) {
+                  svgElement.style.width = "100%";
+                  svgElement.style.height = "auto";
+                  svgElement.style.minHeight = "500px";
+                }
+              }
+            });
         });
-      });
     } catch (error) {
       console.error("Error in mermaid rendering process:", error);
-      toast.error("Visualization rendering failed. Try again or use a different habit description.");
+      toast.error(
+        "Visualization rendering failed. Try again or use a different habit description."
+      );
     }
   };
-  
 
   const fetchVisualizations = async () => {
     setLoadingSaved(true);
     try {
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         throw new Error("Authentication token not found");
       }
@@ -318,7 +341,7 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
           },
         }
       );
-      
+
       setSavedVisualizations(response.data);
     } catch (error) {
       console.error("Error fetching visualizations:", error);
@@ -331,7 +354,7 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
   const loadVisualization = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         throw new Error("Authentication token not found");
       }
@@ -344,7 +367,7 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
           },
         }
       );
-      
+
       setHabitName(response.data.habitName);
       setHabitDescription(response.data.habitDescription || "");
       setMermaidCode(response.data.mermaidCode);
@@ -356,16 +379,21 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
     }
   };
 
+  // Replace the existing deleteVisualization function
   const deleteVisualization = async (id, e) => {
     e.stopPropagation();
-    
-    if (!window.confirm("Are you sure you want to delete this visualization?")) {
-      return;
-    }
+    setDeleteConfirmation({
+      isOpen: true,
+      visualizationId: id
+    });
+  };
+
+  // Add this new function to handle the actual deletion
+  const handleConfirmDelete = async () => {
+    const id = deleteConfirmation.visualizationId;
     
     try {
       const token = localStorage.getItem("token");
-      
       if (!token) {
         throw new Error("Authentication token not found");
       }
@@ -388,25 +416,27 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
     } catch (error) {
       console.error("Error deleting visualization:", error);
       toast.error("Failed to delete visualization");
+    } finally {
+      setDeleteConfirmation({ isOpen: false, visualizationId: null });
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!habitName.trim()) {
       toast.warning("Please enter a habit name");
       return;
     }
-    
+
     // Prevent multiple clicks
     if (loading) return;
-    
+
     setLoading(true);
-    
+
     try {
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         throw new Error("Authentication token not found");
       }
@@ -415,7 +445,7 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
         `${import.meta.env.VITE_API_URL}/api/visualizer/generate`,
         {
           habitName,
-          habitDescription
+          habitDescription,
         },
         {
           headers: {
@@ -423,13 +453,15 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
           },
         }
       );
-      
+
       setMermaidCode(response.data.mermaidCode);
       setVisualizationId(response.data.id);
       toast.success("Visualization created successfully!");
     } catch (error) {
       console.error("Error generating visualization:", error);
-      toast.error(error.response?.data?.message || "Failed to generate visualization");
+      toast.error(
+        error.response?.data?.message || "Failed to generate visualization"
+      );
     } finally {
       setLoading(false);
     }
@@ -437,10 +469,10 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
 
   const handleSaveVisualization = async () => {
     if (!mermaidCode) return;
-    
+
     try {
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         throw new Error("Authentication token not found");
       }
@@ -451,7 +483,7 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
           habitName,
           habitDescription,
           mermaidCode,
-          visualizationId
+          visualizationId,
         },
         {
           headers: {
@@ -459,7 +491,7 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
           },
         }
       );
-      
+
       toast.success("Visualization saved successfully!");
       fetchVisualizations();
     } catch (error) {
@@ -470,18 +502,20 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
 
   const handleDownload = () => {
     if (!mermaidRef.current) return;
-    
-    const svgData = mermaidRef.current.querySelector('svg').outerHTML;
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml' });
-    const downloadLink = document.createElement('a');
-    
+
+    const svgData = mermaidRef.current.querySelector("svg").outerHTML;
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml" });
+    const downloadLink = document.createElement("a");
+
     downloadLink.href = URL.createObjectURL(svgBlob);
-    downloadLink.download = `habit-visualization-${habitName.replace(/\s+/g, '-').toLowerCase()}.svg`;
+    downloadLink.download = `habit-visualization-${habitName
+      .replace(/\s+/g, "-")
+      .toLowerCase()}.svg`;
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
   };
-  
+
   const resetForm = () => {
     setHabitName("");
     setHabitDescription("");
@@ -495,7 +529,8 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Habit Visualizer</h1>
           <p className="text-[#f5f5f7]/60">
-            Create a visual representation of your habit's structure and relationships
+            Create a visual representation of your habit's structure and
+            relationships
           </p>
         </div>
 
@@ -533,8 +568,10 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
               <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h2 className="text-xl font-bold mb-4">Create Visualization</h2>
-                    
+                    <h2 className="text-xl font-bold mb-4">
+                      Create Visualization
+                    </h2>
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
@@ -548,7 +585,7 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
                           className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
                           Description (Optional)
@@ -560,7 +597,7 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
                           className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50 min-h-[120px]"
                         />
                       </div>
-                      
+
                       <div className="flex gap-2">
                         <motion.button
                           type="submit"
@@ -570,14 +607,28 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
                           disabled={loading}
                         >
                           {loading ? (
-                            <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <svg
+                              className="animate-spin h-5 w-5 mr-2"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
                             </svg>
                           ) : null}
                           {loading ? "Generating..." : "Generate"}
                         </motion.button>
-                        
+
                         {visualizationId && (
                           <motion.button
                             type="button"
@@ -592,7 +643,6 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
                       </div>
                     </form>
                   </div>
-                  
 
                   <div>
                     {mermaidCode && (
@@ -606,7 +656,11 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
-                              <svg className="h-3.5 w-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <svg
+                                className="h-3.5 w-3.5 mr-1"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
                                 <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h1a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h1v5.586l-1.293-1.293zM9 4a1 1 0 112 0v2H9V4z" />
                               </svg>
                               Save
@@ -617,124 +671,211 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
-                              <svg className="h-3.5 w-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                              <svg
+                                className="h-3.5 w-3.5 mr-1"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
                               </svg>
                               Download
                             </motion.button>
                             <motion.button
                               onClick={() => setShowCode(!showCode)}
-                              className={`text-xs ${showCode ? "bg-[#A2BFFE] text-[#080808]" : "bg-[#222] hover:bg-[#333] text-[#f5f5f7]"} px-3 py-1 rounded-md flex items-center`}
+                              className={`text-xs ${
+                                showCode
+                                  ? "bg-[#A2BFFE] text-[#080808]"
+                                  : "bg-[#222] hover:bg-[#333] text-[#f5f5f7]"
+                              } px-3 py-1 rounded-md flex items-center`}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
-                              <svg className="h-3.5 w-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                              <svg
+                                className="h-3.5 w-3.5 mr-1"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
                               </svg>
                               {showCode ? "Hide Code" : "View Code"}
                             </motion.button>
                             <motion.button
-  onClick={handleForecast}
-  className="text-xs bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-3 py-1 rounded-md flex items-center"
-  whileHover={{ scale: 1.05 }}
-  whileTap={{ scale: 0.95 }}
->
-  🔮 Forecast
-</motion.button>
+                              onClick={handleForecast}
+                              className="text-xs bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-3 py-1 rounded-md flex items-center"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              🔮 Forecast
+                            </motion.button>
                           </div>
                         </div>
-                        
+
                         {showCode && (
-  <div className="bg-[#111] rounded-md p-3 overflow-auto max-h-60 mb-4">
-    <pre className="text-xs text-[#f5f5f7]/70 whitespace-pre-wrap">{mermaidCode}</pre>
-  </div>
-)}
-{showForecast && (
-  <section className="mt-6 bg-[#18181b] rounded-xl p-8 shadow-2xl border border-[#222]">
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-2xl font-bold flex items-center gap-2">
-        🔮 Habit Forecast
-      </h2>
-      <button
-        className="text-[#A2BFFE] text-xl"
-        onClick={() => setShowForecast(false)}
-        aria-label="Close forecast"
-        type="button"
-      >×</button>
-    </div>
-    {forecastLoading ? (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#A2BFFE]"></div>
-      </div>
-    ) : forecast?.error ? (
-      <div className="text-red-400">{forecast.error}</div>
-    ) : (
-      <div className="space-y-4">
-        {["30", "90", "365"].map((day) => (
-  <div key={day} className="border-b border-[#333] pb-3 mb-3">
-    <h3 className="font-bold text-[#A2BFFE] mb-1">
-      {day === "30" ? "30 Days" : day === "90" ? "90 Days" : "1 Year"}
-    </h3>
-    {forecast?.[day] && typeof forecast[day] === "object" ? (
-      <div className="space-y-3 text-sm text-[#f5f5f7]/90">
-        {forecast[day]["Summary of expected progress or changes"] && (
-          <div>
-            <h4 className="font-medium text-[#A2BFFE]/90">Progress & Changes</h4>
-            <p className="mt-1">{forecast[day]["Summary of expected progress or changes"]}</p>
-          </div>
-        )}
-        
-        {forecast[day]["Potential challenges"] && (
-          <div>
-            <h4 className="font-medium text-[#A2BFFE]/90">Challenges</h4>
-            <p className="mt-1">{forecast[day]["Potential challenges"]}</p>
-          </div>
-        )}
-        
-        {forecast[day]["Motivation tips"] && (
-          <div>
-            <h4 className="font-medium text-[#A2BFFE]/90">Motivation & Tips</h4>
-            <p className="mt-1">{forecast[day]["Motivation tips"]}</p>
-          </div>
-        )}
-        
-        {/* For any other properties we didn't explicitly handle */}
-        {Object.entries(forecast[day]).filter(([key]) => 
-          !["Summary of expected progress or changes", "Potential challenges", "Motivation tips"].includes(key)
-        ).map(([key, value]) => (
-          <div key={key}>
-            <h4 className="font-medium text-[#A2BFFE]/90">{key}</h4>
-            <p className="mt-1">{typeof value === "string" ? value : JSON.stringify(value)}</p>
-          </div>
-        ))}
-      </div>
-    ) : (
-      <pre className="whitespace-pre-wrap text-sm text-[#f5f5f7]/90">
-        {forecast?.[day]
-          ? typeof forecast[day] === "string"
-            ? forecast[day]
-            : JSON.stringify(forecast[day], null, 2)
-          : "No data."}
-      </pre>
-    )}
-  </div>
-))}
-      </div>
-    )}
-  </section>
-)}
+                          <div className="bg-[#111] rounded-md p-3 overflow-auto max-h-60 mb-4">
+                            <pre className="text-xs text-[#f5f5f7]/70 whitespace-pre-wrap">
+                              {mermaidCode}
+                            </pre>
+                          </div>
+                        )}
+                        {showForecast && (
+                          <section className="mt-6 bg-[#18181b] rounded-xl p-8 shadow-2xl border border-[#222]">
+                            <div className="flex justify-between items-center mb-4">
+                              <h2 className="text-2xl font-bold flex items-center gap-2">
+                                🔮 Habit Forecast
+                              </h2>
+                              <button
+                                className="text-[#A2BFFE] text-xl"
+                                onClick={() => setShowForecast(false)}
+                                aria-label="Close forecast"
+                                type="button"
+                              >
+                                ×
+                              </button>
+                            </div>
+                            {forecastLoading ? (
+                              <div className="flex items-center justify-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#A2BFFE]"></div>
+                              </div>
+                            ) : forecast?.error ? (
+                              <div className="text-red-400">
+                                {forecast.error}
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                {["30", "90", "365"].map((day) => (
+                                  <div
+                                    key={day}
+                                    className="border-b border-[#333] pb-3 mb-3"
+                                  >
+                                    <h3 className="font-bold text-[#A2BFFE] mb-1">
+                                      {day === "30"
+                                        ? "30 Days"
+                                        : day === "90"
+                                        ? "90 Days"
+                                        : "1 Year"}
+                                    </h3>
+                                    {forecast?.[day] &&
+                                    typeof forecast[day] === "object" ? (
+                                      <div className="space-y-3 text-sm text-[#f5f5f7]/90">
+                                        {forecast[day][
+                                          "Summary of expected progress or changes"
+                                        ] && (
+                                          <div>
+                                            <h4 className="font-medium text-[#A2BFFE]/90">
+                                              Progress & Changes
+                                            </h4>
+                                            <p className="mt-1">
+                                              {
+                                                forecast[day][
+                                                  "Summary of expected progress or changes"
+                                                ]
+                                              }
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        {forecast[day][
+                                          "Potential challenges"
+                                        ] && (
+                                          <div>
+                                            <h4 className="font-medium text-[#A2BFFE]/90">
+                                              Challenges
+                                            </h4>
+                                            <p className="mt-1">
+                                              {
+                                                forecast[day][
+                                                  "Potential challenges"
+                                                ]
+                                              }
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        {forecast[day]["Motivation tips"] && (
+                                          <div>
+                                            <h4 className="font-medium text-[#A2BFFE]/90">
+                                              Motivation & Tips
+                                            </h4>
+                                            <p className="mt-1">
+                                              {forecast[day]["Motivation tips"]}
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        {/* For any other properties we didn't explicitly handle */}
+                                        {Object.entries(forecast[day])
+                                          .filter(
+                                            ([key]) =>
+                                              ![
+                                                "Summary of expected progress or changes",
+                                                "Potential challenges",
+                                                "Motivation tips",
+                                              ].includes(key)
+                                          )
+                                          .map(([key, value]) => (
+                                            <div key={key}>
+                                              <h4 className="font-medium text-[#A2BFFE]/90">
+                                                {key}
+                                              </h4>
+                                              <p className="mt-1">
+                                                {typeof value === "string"
+                                                  ? value
+                                                  : JSON.stringify(value)}
+                                              </p>
+                                            </div>
+                                          ))}
+                                      </div>
+                                    ) : (
+                                      <pre className="whitespace-pre-wrap text-sm text-[#f5f5f7]/90">
+                                        {forecast?.[day]
+                                          ? typeof forecast[day] === "string"
+                                            ? forecast[day]
+                                            : JSON.stringify(
+                                                forecast[day],
+                                                null,
+                                                2
+                                              )
+                                          : "No data."}
+                                      </pre>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </section>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
-                <h2 className="text-xl font-bold mb-4">Visualization Preview</h2>
+                <h2 className="text-xl font-bold mb-4">
+                  Visualization Preview
+                </h2>
                 {!mermaidCode ? (
                   <div className="flex flex-col items-center justify-center h-[500px] border border-dashed border-[#333] rounded-lg">
-                    <svg className="h-16 w-16 text-[#333]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg
+                      className="h-16 w-16 text-[#333]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                     <p className="mt-4 text-[#555] text-sm">
                       Enter your habit details and generate a visualization
@@ -747,7 +888,11 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#A2BFFE]"></div>
                       </div>
                     ) : (
-                      <div ref={mermaidRef} className="mermaid-container flex justify-center" style={{ minHeight: "500px" }} />
+                      <div
+                        ref={mermaidRef}
+                        className="mermaid-container flex justify-center"
+                        style={{ minHeight: "500px" }}
+                      />
                     )}
                   </div>
                 )}
@@ -764,7 +909,7 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
           >
             <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
               <h2 className="text-xl font-bold mb-6">Saved Visualizations</h2>
-              
+
               {loadingSaved ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#A2BFFE]"></div>
@@ -772,7 +917,9 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
               ) : savedVisualizations.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-4xl mb-4">📊</div>
-                  <h3 className="text-xl font-bold mb-2">No Saved Visualizations</h3>
+                  <h3 className="text-xl font-bold mb-2">
+                    No Saved Visualizations
+                  </h3>
                   <p className="text-[#f5f5f7]/60 mb-6">
                     Create and save habit visualizations to see them here
                   </p>
@@ -823,11 +970,20 @@ fixedCode = fixedCode.replace(/:::\w+/g, '') + '\n' + classAssignments;
                   ))}
                 </div>
               )}
-              
             </div>
-            
           </motion.div>
         )}
+
+        <ConfirmationModal
+          isOpen={deleteConfirmation.isOpen}
+          onClose={() => setDeleteConfirmation({ isOpen: false, visualizationId: null })}
+          onConfirm={handleConfirmDelete}
+          title="Delete Visualization"
+          message="Are you sure you want to delete this visualization? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          type="danger"
+        />
       </main>
     </div>
   );
