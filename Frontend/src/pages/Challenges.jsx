@@ -6,7 +6,6 @@ import ParticipantsList from "../components/Challenges/ParticipantsList";
 import QRCodeGenerator from "../components/QR/QRCodeGenerator";
 import QRCodeScanner from "../components/QR/QRCodeScanner";
 
-
 const Challenges = () => {
   const [activeTab, setActiveTab] = useState("explore");
   const [challenges, setChallenges] = useState([]);
@@ -21,21 +20,23 @@ const Challenges = () => {
   const [showQRGenerator, setShowQRGenerator] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  
+
   // Form states
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0], // 30 days from now
   });
-  
+
   // Fetch all challenges
   const fetchChallenges = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      
+
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/challenges`,
         {
@@ -48,11 +49,13 @@ const Challenges = () => {
       // Process challenges to identify user's participations
       const challenges = response.data;
       const userId = JSON.parse(atob(token.split(".")[1])).id;
-      
-      const participations = challenges.filter(challenge => 
-        challenge.participants.some(p => p.user === userId || p.user?._id === userId)
+
+      const participations = challenges.filter((challenge) =>
+        challenge.participants.some(
+          (p) => p.user === userId || p.user?._id === userId
+        )
       );
-      
+
       setChallenges(challenges);
       setMyParticipations(participations);
       setLoading(false);
@@ -70,14 +73,14 @@ const Challenges = () => {
       const user = localStorage.getItem("user");
       await axios.post(
         `${import.meta.env.VITE_API_URL}/api/challenges/${challengeId}/join`,
-        {user:user ? JSON.parse(user) : undefined},
+        { user: user ? JSON.parse(user) : undefined },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      
+
       toast.success("Successfully joined challenge!");
       fetchChallenges();
     } catch (error) {
@@ -89,22 +92,24 @@ const Challenges = () => {
   const updateProgress = async (challengeId, progress, currentProgress) => {
     // Calculate new total progress
     const newTotalProgress = currentProgress + progress;
-    
+
     // Check if it would exceed 100%
     if (newTotalProgress > 100) {
       toast.warning("Cannot exceed 100% progress!");
       return;
     }
-    
+
     try {
       const token = localStorage.getItem("token");
       const user = localStorage.getItem("user");
-  
+
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/challenges/${challengeId}/progress`,
-        { 
+        `${
+          import.meta.env.VITE_API_URL
+        }/api/challenges/${challengeId}/progress`,
+        {
           progress,
-          user: user ? JSON.parse(user) : undefined
+          user: user ? JSON.parse(user) : undefined,
         },
         {
           headers: {
@@ -112,7 +117,7 @@ const Challenges = () => {
           },
         }
       );
-      
+
       toast.success("Progress updated successfully!");
       fetchChallenges();
     } catch (error) {
@@ -127,27 +132,28 @@ const Challenges = () => {
       const token = localStorage.getItem("token");
       const user = localStorage.getItem("user");
 
-      
       await axios.post(
         `${import.meta.env.VITE_API_URL}/api/challenges`,
         {
           ...formData,
-          user: user ? JSON.parse(user) : undefined
+          user: user ? JSON.parse(user) : undefined,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-          }
+          },
         }
       );
-      
+
       toast.success("Challenge created successfully!");
       setShowCreateModal(false);
       setFormData({
         name: "",
         description: "",
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        startDate: new Date().toISOString().split("T")[0],
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
       });
       fetchChallenges();
     } catch (error) {
@@ -158,44 +164,44 @@ const Challenges = () => {
   // Initialize Fluvio for real-time updates
   const initWebSocket = () => {
     // Determine WebSocket URL based on environment
-    const wsUrl = import.meta.env.DEV 
-    ? `ws://localhost:8000` 
-    : `https://hackhazard.onrender.com`;
-    
-  const socket = new WebSocket(wsUrl);
-    
+    const wsUrl = import.meta.env.DEV
+      ? `ws://localhost:8000`
+      : `https://hackhazard.onrender.com`;
+
+    const socket = new WebSocket(wsUrl);
+
     socket.onopen = () => {
-      console.log('Connected to WebSocket server');
+      console.log("Connected to WebSocket server");
     };
-    
+
     // Change this part in your onmessage handler
-socket.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      
-      // Handle history updates (sent when first connecting)
-      if (data.type === 'history' && Array.isArray(data.updates)) {
-        setUpdates(data.updates);
-      } 
-      // Handle normal updates
-      else {
-        setUpdates(prev => [data, ...prev].slice(0, 20));
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // Handle history updates (sent when first connecting)
+        if (data.type === "history" && Array.isArray(data.updates)) {
+          setUpdates(data.updates);
+        }
+        // Handle normal updates
+        else {
+          setUpdates((prev) => [data, ...prev].slice(0, 20));
+        }
+      } catch (error) {
+        console.error("Failed to parse WebSocket message:", error);
       }
-    } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
-    }
-  };
-    
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
     };
-    
+
+    socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
     // Return cleanup function
     return () => {
       socket.close();
     };
   };
-  
+
   // Update useEffect
   useEffect(() => {
     fetchChallenges();
@@ -214,44 +220,44 @@ socket.onmessage = (event) => {
   // Modify this function to validate progress total doesn't exceed 100%
   const handleCustomProgressChange = (challengeId, value, currentProgress) => {
     // Clear any existing error for this challenge
-    setProgressErrors(prev => ({
+    setProgressErrors((prev) => ({
       ...prev,
-      [challengeId]: null
+      [challengeId]: null,
     }));
-    
+
     // Parse the input value
     const inputValue = parseInt(value) || 0;
-    
+
     // Check if the new total would exceed 100%
     if (inputValue + currentProgress > 100) {
       // Calculate maximum allowed value
       const maxAllowed = 100 - currentProgress;
-      
+
       // Set error message
-      setProgressErrors(prev => ({
+      setProgressErrors((prev) => ({
         ...prev,
-        [challengeId]: `Cannot exceed 100%. Maximum allowed: ${maxAllowed}%`
+        [challengeId]: `Cannot exceed 100%. Maximum allowed: ${maxAllowed}%`,
       }));
-      
+
       // Limit the input to the maximum allowed value
-      setCustomProgressValues(prev => ({
+      setCustomProgressValues((prev) => ({
         ...prev,
-        [challengeId]: maxAllowed.toString()
+        [challengeId]: maxAllowed.toString(),
       }));
     } else {
       // Valid input, store it normally
-      setCustomProgressValues(prev => ({
+      setCustomProgressValues((prev) => ({
         ...prev,
-        [challengeId]: value
+        [challengeId]: value,
       }));
     }
   };
 
   // Add this function to clear a specific progress input
   const clearCustomProgress = (challengeId) => {
-    setCustomProgressValues(prev => ({
+    setCustomProgressValues((prev) => ({
       ...prev,
-      [challengeId]: ""
+      [challengeId]: "",
     }));
   };
 
@@ -273,7 +279,7 @@ socket.onmessage = (event) => {
               Join challenges and build habits together
             </p>
           </div>
-          
+
           <motion.button
             onClick={() => setShowCreateModal(true)}
             className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 py-2.5 rounded-lg font-bold text-sm"
@@ -283,19 +289,29 @@ socket.onmessage = (event) => {
             Create Challenge
           </motion.button>
         </div>
-        <div className="flex gap-2">
-  <motion.button
-    onClick={() => setShowQRScanner(true)}
-    className="bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-4 py-2.5 rounded-lg text-sm flex items-center gap-2"
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-  >
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-    </svg>
-    Scan QR
-  </motion.button>
-</div>
+        <div className="flex gap-2 mb-4">
+          <motion.button
+            onClick={() => setShowQRScanner(true)}
+            className="bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-4 py-2.5 rounded-lg text-sm flex items-center gap-2"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+              />
+            </svg>
+            Scan QR
+          </motion.button>
+        </div>
         {/* Tabs - Only showing main tabs */}
         <div className="flex gap-4 mb-6 border-b border-[#222]">
           {["explore", "my-challenges", "live-updates"].map((tab) => (
@@ -308,11 +324,11 @@ socket.onmessage = (event) => {
                   : "text-[#f5f5f7]/60 hover:text-[#f5f5f7]"
               }`}
             >
-              {tab === "explore" 
-                ? "Explore" 
-                : tab === "my-challenges" 
-                  ? "My Challenges" 
-                  : "Live Updates"}
+              {tab === "explore"
+                ? "Explore"
+                : tab === "my-challenges"
+                ? "My Challenges"
+                : "Live Updates"}
               {activeTab === tab && (
                 <motion.div
                   layoutId="activeTab"
@@ -337,7 +353,9 @@ socket.onmessage = (event) => {
               {challenges.length === 0 ? (
                 <div className="col-span-full text-center py-12">
                   <div className="text-4xl mb-4">🏆</div>
-                  <h3 className="text-xl font-bold mb-2">No Challenges Available</h3>
+                  <h3 className="text-xl font-bold mb-2">
+                    No Challenges Available
+                  </h3>
                   <p className="text-[#f5f5f7]/60 mb-6">
                     Be the first to create a challenge for the community!
                   </p>
@@ -346,11 +364,13 @@ socket.onmessage = (event) => {
                 challenges.map((challenge) => {
                   // Check if user is already a participant
                   const token = localStorage.getItem("token");
-                  const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
+                  const userId = token
+                    ? JSON.parse(atob(token.split(".")[1])).id
+                    : null;
                   const isParticipant = challenge.participants.some(
-                    p => p.user === userId || p.user?._id === userId
+                    (p) => p.user === userId || p.user?._id === userId
                   );
-                  
+
                   return (
                     <motion.div
                       key={challenge._id}
@@ -358,42 +378,58 @@ socket.onmessage = (event) => {
                       whileHover={{ y: -2 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <h3 className="font-bold text-[#A2BFFE] mb-2">{challenge.name}</h3>
+                      <h3 className="font-bold text-[#A2BFFE] mb-2">
+                        {challenge.name}
+                      </h3>
                       <p className="text-sm text-[#f5f5f7]/60 mb-3 line-clamp-2">
                         {challenge.description}
                       </p>
-                      
+
                       <div className="flex flex-wrap gap-2 mb-3">
                         <span className="text-xs bg-[#222] px-2 py-1 rounded-full text-[#f5f5f7]/60">
-                          {new Date(challenge.startDate).toLocaleDateString()} to {new Date(challenge.endDate).toLocaleDateString()}
+                          {new Date(challenge.startDate).toLocaleDateString()}{" "}
+                          to {new Date(challenge.endDate).toLocaleDateString()}
                         </span>
-                        <button 
+                        <button
                           className="text-xs bg-[#222] px-2 py-1 rounded-full text-[#f5f5f7]/60 cursor-pointer hover:bg-[#333] flex items-center"
                           onClick={() => {
                             setSelectedChallengeId(challenge._id);
                             setActiveTab("participants");
                           }}
                         >
-                          <span className="mr-1">👥</span> {challenge.participants.length} participants
+                          <span className="mr-1">👥</span>{" "}
+                          {challenge.participants.length} participants
                         </button>
                       </div>
-                      <motion.button 
-  onClick={(e) => {
-    e.stopPropagation();
-    setSelectedItem(challenge);
-    setShowQRGenerator(true);
-  }}
-  className="text-xs bg-[#222] px-2 py-1 rounded-full text-[#f5f5f7]/60 cursor-pointer hover:bg-[#333] flex items-center"
->
-  <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-  </svg>
-  QR Code
-</motion.button>
+                      <motion.button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedItem(challenge);
+                          setShowQRGenerator(true);
+                        }}
+                        className="text-xs bg-[#222] px-2 py-1 rounded-full text-[#f5f5f7]/60 cursor-pointer hover:bg-[#333] flex items-center"
+                      >
+                        <svg
+                          className="w-3 h-3 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                          />
+                        </svg>
+                        QR Code
+                      </motion.button>
                       {isParticipant ? (
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-[#A2BFFE]">You've joined</span>
-                          <button 
+                          <span className="text-xs text-[#A2BFFE]">
+                            You've joined
+                          </span>
+                          <button
                             className="text-xs bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-3 py-1.5 rounded-md"
                             onClick={() => setActiveTab("my-challenges")}
                           >
@@ -403,7 +439,7 @@ socket.onmessage = (event) => {
                       ) : (
                         <motion.button
                           onClick={() => joinChallenge(challenge._id)}
-                          className="w-full bg-[#222] hover:bg-[#333] text-[#f5f5f7] py-2 rounded-md text-sm font-medium"
+                          className="w-full bg-[#222] hover:bg-[#333] text-[#f5f5f7] py-2 rounded-md text-sm font-medium mt-4"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
@@ -428,7 +464,9 @@ socket.onmessage = (event) => {
               {myParticipations.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-4xl mb-4">🚀</div>
-                  <h3 className="text-xl font-bold mb-2">No Active Challenges</h3>
+                  <h3 className="text-xl font-bold mb-2">
+                    No Active Challenges
+                  </h3>
                   <p className="text-[#f5f5f7]/60 mb-6">
                     Join a challenge to start tracking your progress together!
                   </p>
@@ -444,143 +482,198 @@ socket.onmessage = (event) => {
               ) : (
                 <div className="space-y-6">
                   {myParticipations.map((challenge) => {
-  // Find user's participation
-  const token = localStorage.getItem("token");
-  const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
-  const myParticipation = challenge.participants.find(
-    p => p.user === userId || p.user?._id === userId
-  );
-  const progress = myParticipation?.progress || 0;
-  // Remove the useState here and use the value from the state object
-  const customProgress = customProgressValues[challenge._id] || "";
-  
-  return (
-    <motion.div
-      key={challenge._id}
-      className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <h3 className="font-bold text-xl text-[#A2BFFE] mb-2">
-        {challenge.name}
-      </h3>
-      <p className="text-[#f5f5f7]/60 mb-4">
-        {challenge.description}
-      </p>
-      
-      <div className="mb-6">
-        <div className="flex justify-between text-sm mb-1">
-          <span>Progress</span>
-          <span className="text-[#A2BFFE]">{progress}%</span>
-        </div>
-        <div className="w-full bg-[#222] rounded-full h-2.5">
-          <div 
-            className="bg-[#A2BFFE] h-2.5 rounded-full" 
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-      </div>
-      
-      <div className="flex flex-wrap gap-3 mb-6">
-        <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
-          <p className="text-xs text-[#f5f5f7]/60">Start Date</p>
-          <p className="text-sm font-medium">
-            {new Date(challenge.startDate).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
-          <p className="text-xs text-[#f5f5f7]/60">End Date</p>
-          <p className="text-sm font-medium">
-            {new Date(challenge.endDate).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
-          <p className="text-xs text-[#f5f5f7]/60">Participants</p>
-          <p className="text-sm font-medium">{challenge.participants.length}</p>
-        </div>
-      </div>
-      
-      {/* Quick percentage buttons */}
-      <div className="flex gap-3 mb-4">
-        {[10, 25, 50].map((amount) => (
-          <motion.button
-            key={amount}
-            onClick={() => updateProgress(challenge._id, amount, progress)}
-            className={`flex-1 bg-[#222] hover:bg-[#333] text-[#f5f5f7] py-2 rounded-lg text-sm ${
-              progress >= 100 ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            whileHover={{ scale: progress >= 100 ? 1 : 1.02 }}
-            whileTap={{ scale: progress >= 100 ? 1 : 0.98 }}
-            disabled={progress >= 100}
-          >
-            +{amount}%
-          </motion.button>
-        ))}
-      </div>
-      
-      {/* Custom percentage input */}
-      <div className="flex gap-3 mt-3">
-        <div className="flex-1">
-          <div className="relative">
-            <input
-              type="number"
-              value={customProgress}
-              onChange={(e) => handleCustomProgressChange(challenge._id, e.target.value, progress)}
-              placeholder="Custom %"
-              min="1"
-              max={100 - progress}
-              className={`w-full px-4 py-2 bg-[#111] border ${
-                progressErrors[challenge._id] ? 'border-red-500' : 'border-[#222]'
-              } rounded-lg focus:outline-none focus:ring-1 focus:ring-[#A2BFFE]/50 ${
-                progress >= 100 ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-              disabled={progress >= 100}
-            />
-            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#f5f5f7]/40">
-              %
-            </span>
-          </div>
-          {progressErrors[challenge._id] && (
-            <p className="text-xs text-red-500 mt-1">{progressErrors[challenge._id]}</p>
-          )}
-        </div>
-        
-        <motion.button
-          onClick={() => {
-            // Only proceed if there's valid input and no errors
-            if (customProgress && parseInt(customProgress) > 0 && !progressErrors[challenge._id]) {
-              updateProgress(challenge._id, parseInt(customProgress), progress);
-              clearCustomProgress(challenge._id); // Clear input after submission
-            } else if (progressErrors[challenge._id]) {
-              toast.error(progressErrors[challenge._id]);
-            } else {
-              toast.warning("Please enter a valid percentage");
-            }
-          }}
-          className={`bg-[#A2BFFE] text-[#080808] px-4 py-2 rounded-lg font-medium text-sm ${
-            !customProgress || progress >= 100 ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          whileHover={{ scale: !customProgress || progress >= 100 ? 1 : 1.02 }}
-          whileTap={{ scale: !customProgress || progress >= 100 ? 1 : 0.98 }}
-          disabled={!customProgress || progress >= 100}
-        >
-          Add
-        </motion.button>
-      </div>
-      
-      {/* Completion message */}
-      {progress >= 100 && (
-        <div className="mt-4 flex items-center justify-center py-2 text-sm text-green-500 bg-green-500/10 rounded-lg">
-          <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          Challenge completed!
-        </div>
-      )}
-    </motion.div>
-  );
-})}
+                    // Find user's participation
+                    const token = localStorage.getItem("token");
+                    const userId = token
+                      ? JSON.parse(atob(token.split(".")[1])).id
+                      : null;
+                    const myParticipation = challenge.participants.find(
+                      (p) => p.user === userId || p.user?._id === userId
+                    );
+                    const progress = myParticipation?.progress || 0;
+                    // Remove the useState here and use the value from the state object
+                    const customProgress =
+                      customProgressValues[challenge._id] || "";
+
+                    return (
+                      <motion.div
+                        key={challenge._id}
+                        className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <h3 className="font-bold text-xl text-[#A2BFFE] mb-2">
+                          {challenge.name}
+                        </h3>
+                        <p className="text-[#f5f5f7]/60 mb-4">
+                          {challenge.description}
+                        </p>
+
+                        <div className="mb-6">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Progress</span>
+                            <span className="text-[#A2BFFE]">{progress}%</span>
+                          </div>
+                          <div className="w-full bg-[#222] rounded-full h-2.5">
+                            <div
+                              className="bg-[#A2BFFE] h-2.5 rounded-full"
+                              style={{ width: `${progress}%` }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3 mb-6">
+                          <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
+                            <p className="text-xs text-[#f5f5f7]/60">
+                              Start Date
+                            </p>
+                            <p className="text-sm font-medium">
+                              {new Date(
+                                challenge.startDate
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
+                            <p className="text-xs text-[#f5f5f7]/60">
+                              End Date
+                            </p>
+                            <p className="text-sm font-medium">
+                              {new Date(challenge.endDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="bg-[#111] border border-[#222] rounded-lg px-4 py-2 text-center flex-1">
+                            <p className="text-xs text-[#f5f5f7]/60">
+                              Participants
+                            </p>
+                            <p className="text-sm font-medium">
+                              {challenge.participants.length}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Quick percentage buttons */}
+                        <div className="flex gap-3 mb-4">
+                          {[10, 25, 50].map((amount) => (
+                            <motion.button
+                              key={amount}
+                              onClick={() =>
+                                updateProgress(challenge._id, amount, progress)
+                              }
+                              className={`flex-1 bg-[#222] hover:bg-[#333] text-[#f5f5f7] py-2 rounded-lg text-sm ${
+                                progress >= 100
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                              whileHover={{ scale: progress >= 100 ? 1 : 1.02 }}
+                              whileTap={{ scale: progress >= 100 ? 1 : 0.98 }}
+                              disabled={progress >= 100}
+                            >
+                              +{amount}%
+                            </motion.button>
+                          ))}
+                        </div>
+
+                        {/* Custom percentage input */}
+                        <div className="flex gap-3 mt-3">
+                          <div className="flex-1">
+                            <div className="relative">
+                              <input
+                                type="number"
+                                value={customProgress}
+                                onChange={(e) =>
+                                  handleCustomProgressChange(
+                                    challenge._id,
+                                    e.target.value,
+                                    progress
+                                  )
+                                }
+                                placeholder="Custom %"
+                                min="1"
+                                max={100 - progress}
+                                className={`w-full px-4 py-2 bg-[#111] border ${
+                                  progressErrors[challenge._id]
+                                    ? "border-red-500"
+                                    : "border-[#222]"
+                                } rounded-lg focus:outline-none focus:ring-1 focus:ring-[#A2BFFE]/50 ${
+                                  progress >= 100
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }`}
+                                disabled={progress >= 100}
+                              />
+                              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#f5f5f7]/40">
+                                %
+                              </span>
+                            </div>
+                            {progressErrors[challenge._id] && (
+                              <p className="text-xs text-red-500 mt-1">
+                                {progressErrors[challenge._id]}
+                              </p>
+                            )}
+                          </div>
+
+                          <motion.button
+                            onClick={() => {
+                              // Only proceed if there's valid input and no errors
+                              if (
+                                customProgress &&
+                                parseInt(customProgress) > 0 &&
+                                !progressErrors[challenge._id]
+                              ) {
+                                updateProgress(
+                                  challenge._id,
+                                  parseInt(customProgress),
+                                  progress
+                                );
+                                clearCustomProgress(challenge._id); // Clear input after submission
+                              } else if (progressErrors[challenge._id]) {
+                                toast.error(progressErrors[challenge._id]);
+                              } else {
+                                toast.warning(
+                                  "Please enter a valid percentage"
+                                );
+                              }
+                            }}
+                            className={`bg-[#A2BFFE] text-[#080808] px-4 py-2 rounded-lg font-medium text-sm ${
+                              !customProgress || progress >= 100
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
+                            whileHover={{
+                              scale:
+                                !customProgress || progress >= 100 ? 1 : 1.02,
+                            }}
+                            whileTap={{
+                              scale:
+                                !customProgress || progress >= 100 ? 1 : 0.98,
+                            }}
+                            disabled={!customProgress || progress >= 100}
+                          >
+                            Add
+                          </motion.button>
+                        </div>
+
+                        {/* Completion message */}
+                        {progress >= 100 && (
+                          <div className="mt-4 flex items-center justify-center py-2 text-sm text-green-500 bg-green-500/10 rounded-lg">
+                            <svg
+                              className="w-4 h-4 mr-1.5"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Challenge completed!
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </motion.div>
@@ -597,7 +690,7 @@ socket.onmessage = (event) => {
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <span className="text-[#A2BFFE]">Live</span> Challenge Updates
               </h2>
-              
+
               {updates.length === 0 ? (
                 <div className="text-center py-8 text-[#f5f5f7]/60">
                   <p>No updates yet. Updates will appear here in real-time!</p>
@@ -613,7 +706,13 @@ socket.onmessage = (event) => {
                       transition={{ duration: 0.3 }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${update.type === 'join' ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            update.type === "join"
+                              ? "bg-green-500"
+                              : "bg-blue-500"
+                          }`}
+                        ></div>
                         <p className="text-sm">{update.message}</p>
                       </div>
                       <p className="text-xs text-[#f5f5f7]/40 mt-2">
@@ -625,7 +724,7 @@ socket.onmessage = (event) => {
               )}
             </motion.div>
           )}
-          
+
           {/* Participants View Tab - Hidden from tab bar but accessible */}
           {activeTab === "participants" && (
             <motion.div
@@ -637,26 +736,39 @@ socket.onmessage = (event) => {
             >
               {/* Back button to return to explore */}
               <div className="mb-4 flex items-center">
-                <button 
-                  onClick={() => setActiveTab("explore")} 
+                <button
+                  onClick={() => setActiveTab("explore")}
                   className="flex items-center text-[#f5f5f7]/60 hover:text-[#f5f5f7] mr-4"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-1"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Back to Explore
                 </button>
-                
+
                 <h2 className="text-xl font-bold">
-                  Challenge Participants: 
+                  Challenge Participants:
                   <span className="ml-2 text-[#A2BFFE]">
-                    {challenges.find(c => c._id === selectedChallengeId)?.name || ""}
+                    {challenges.find((c) => c._id === selectedChallengeId)
+                      ?.name || ""}
                   </span>
                 </h2>
               </div>
-              
+
               <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
-                <ParticipantsList challengeId={selectedChallengeId} challenges={challenges} />
+                <ParticipantsList
+                  challengeId={selectedChallengeId}
+                  challenges={challenges}
+                />
               </div>
             </motion.div>
           )}
@@ -687,7 +799,7 @@ socket.onmessage = (event) => {
                   ×
                 </button>
               </div>
-              
+
               <form onSubmit={createChallenge} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
@@ -703,7 +815,7 @@ socket.onmessage = (event) => {
                     className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
                     Description
@@ -716,7 +828,7 @@ socket.onmessage = (event) => {
                     className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50 min-h-[100px]"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
@@ -730,7 +842,7 @@ socket.onmessage = (event) => {
                       className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
                       End Date
@@ -744,7 +856,7 @@ socket.onmessage = (event) => {
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3 pt-4">
                   <motion.button
                     type="button"
@@ -755,7 +867,7 @@ socket.onmessage = (event) => {
                   >
                     Cancel
                   </motion.button>
-                  
+
                   <motion.button
                     type="submit"
                     className="flex-1 bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] py-2.5 rounded-lg font-bold"
@@ -771,31 +883,31 @@ socket.onmessage = (event) => {
         )}
       </AnimatePresence>
       {/* QR Code Generator Modal */}
-<AnimatePresence>
-  {showQRGenerator && selectedItem && (
-    <QRCodeGenerator 
-      type="challenge" 
-      item={selectedItem} 
-      onClose={() => {
-        setShowQRGenerator(false);
-        setSelectedItem(null);
-      }} 
-    />
-  )}
-</AnimatePresence>
+      <AnimatePresence>
+        {showQRGenerator && selectedItem && (
+          <QRCodeGenerator
+            type="challenge"
+            item={selectedItem}
+            onClose={() => {
+              setShowQRGenerator(false);
+              setSelectedItem(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
-{/* QR Code Scanner Modal */}
-<AnimatePresence>
-  {showQRScanner && (
-    <QRCodeScanner 
-      onClose={() => setShowQRScanner(false)} 
-      onSuccess={(data) => {
-        // Refresh data after successful scan
-        fetchChallenges();
-      }} 
-    />
-  )}
-</AnimatePresence>
+      {/* QR Code Scanner Modal */}
+      <AnimatePresence>
+        {showQRScanner && (
+          <QRCodeScanner
+            onClose={() => setShowQRScanner(false)}
+            onSuccess={(data) => {
+              // Refresh data after successful scan
+              fetchChallenges();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
