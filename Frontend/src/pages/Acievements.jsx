@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
-import AchievementCard from "../components/achievements/AchievementCard";
+import AchievementCard from "../components/Achievements/AchievementCard";
 
 const Achievements = () => {
   const [loading, setLoading] = useState(true);
