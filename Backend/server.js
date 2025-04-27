@@ -23,12 +23,14 @@ const PORT = process.env.PORT || 8000;
 const app = express();
 const httpServer = createServer(app);
 
+const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+const normalizedClientUrl = clientUrl.endsWith('/') ? clientUrl.slice(0, -1) : clientUrl;
 // Initialize WebSocket with our HTTP server
 initWebsocket(httpServer);
 // Initialize Socket.IO
 const io = socketIo(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: normalizedClientUrl,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -111,7 +113,7 @@ io.on("connection", (socket) => {
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: normalizedClientUrl,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   })
