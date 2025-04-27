@@ -3,9 +3,14 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import ConfirmationModal from "../ConfirmationModal"
+import ConfirmationModal from "../ConfirmationModal";
 
-const HabitEditor = ({ habit, onUpdate, onClose }) => {
+const HabitEditor = ({
+  habit,
+  onUpdate,
+  onClose,
+  userGoogleCalendarConnected = false,
+}) => {
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [editedHabit, setEditedHabit] = useState({
@@ -18,7 +23,11 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
       reminderTime: habit.reminderSettings?.reminderTime ?? 15,
       missedCheckEnabled: habit.reminderSettings?.missedCheckEnabled ?? true,
     },
+    syncWithGoogleCalendar: habit.syncWithGoogleCalendar || false,
   });
+
+  console.log("Google Calendar connected status:", userGoogleCalendarConnected);
+  console.log("Initial habit sync value:", habit.syncWithGoogleCalendar);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -87,9 +96,22 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Edit Habit</h2>
-          <button onClick={onClose} className="text-[#f5f5f7]/60 hover:text-[#f5f5f7]">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="text-[#f5f5f7]/60 hover:text-[#f5f5f7]"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -99,21 +121,32 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
             {/* Left Column - Basic Info */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Habit Name</label>
+                <label className="block text-sm font-medium mb-1">
+                  Habit Name
+                </label>
                 <input
                   type="text"
                   value={editedHabit.name}
-                  onChange={(e) => setEditedHabit({ ...editedHabit, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditedHabit({ ...editedHabit, name: e.target.value })
+                  }
                   className="w-full px-3 py-2 bg-[#111] border border-[#222] rounded-lg focus:outline-none focus:border-[#A2BFFE]"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <label className="block text-sm font-medium mb-1">
+                  Description
+                </label>
                 <textarea
                   value={editedHabit.description}
-                  onChange={(e) => setEditedHabit({ ...editedHabit, description: e.target.value })}
+                  onChange={(e) =>
+                    setEditedHabit({
+                      ...editedHabit,
+                      description: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2 bg-[#111] border border-[#222] rounded-lg focus:outline-none focus:border-[#A2BFFE] h-24 resize-none"
                 />
               </div>
@@ -123,10 +156,17 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Frequency</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Frequency
+                  </label>
                   <select
                     value={editedHabit.frequency}
-                    onChange={(e) => setEditedHabit({ ...editedHabit, frequency: e.target.value })}
+                    onChange={(e) =>
+                      setEditedHabit({
+                        ...editedHabit,
+                        frequency: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 bg-[#111] border border-[#222] rounded-lg focus:outline-none focus:border-[#A2BFFE]"
                   >
                     <option value="daily">Daily</option>
@@ -135,11 +175,18 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Time of Day</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Time of Day
+                  </label>
                   <input
                     type="time"
                     value={editedHabit.timeOfDay}
-                    onChange={(e) => setEditedHabit({ ...editedHabit, timeOfDay: e.target.value })}
+                    onChange={(e) =>
+                      setEditedHabit({
+                        ...editedHabit,
+                        timeOfDay: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 bg-[#111] border border-[#222] rounded-lg focus:outline-none focus:border-[#A2BFFE]"
                     required
                   />
@@ -150,7 +197,9 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
                 <h3 className="font-medium">Reminder Settings</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-[#0a0a0a] rounded-lg">
-                    <label className="text-sm font-medium text-[#f5f5f7]/80">Enable Reminders</label>
+                    <label className="text-sm font-medium text-[#f5f5f7]/80">
+                      Enable Reminders
+                    </label>
                     <input
                       type="checkbox"
                       checked={editedHabit.reminderSettings.enabled}
@@ -197,7 +246,9 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
                         </label>
                         <input
                           type="checkbox"
-                          checked={editedHabit.reminderSettings.missedCheckEnabled}
+                          checked={
+                            editedHabit.reminderSettings.missedCheckEnabled
+                          }
                           onChange={(e) =>
                             setEditedHabit({
                               ...editedHabit,
@@ -210,6 +261,31 @@ const HabitEditor = ({ habit, onUpdate, onClose }) => {
                           className="w-5 h-5 accent-[#A2BFFE]"
                         />
                       </div>
+
+                      <div className="flex items-center justify-between p-3 bg-[#0a0a0a] rounded-lg">
+                        <label className="text-sm font-medium text-[#f5f5f7]/80">
+                          Sync with Google Calendar
+                        </label>
+                        <input
+                          type="checkbox"
+                          checked={editedHabit.syncWithGoogleCalendar}
+                          onChange={(e) =>
+                            setEditedHabit({
+                              ...editedHabit,
+                              syncWithGoogleCalendar: e.target.checked,
+                            })
+                          }
+                          className="w-5 h-5 accent-[#A2BFFE]"
+                          disabled={!userGoogleCalendarConnected}
+                        />
+                      </div>
+
+                      {!userGoogleCalendarConnected && (
+                        <p className="text-xs text-[#f5f5f7]/60 mt-2">
+                          Connect Google Calendar in settings to enable this
+                          feature
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

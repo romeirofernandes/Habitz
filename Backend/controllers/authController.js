@@ -96,6 +96,7 @@ exports.getMe = async (req, res) => {
       _id: user._id,
       username: user.username,
       email: user.email,
+      googleCalendar: user.googleCalendar, // <-- Add this line
     });
   } catch (error) {
     res.status(500).json({

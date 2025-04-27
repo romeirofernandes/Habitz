@@ -12,6 +12,7 @@ const visualizerRoutes = require('./routes/visualizerRoutes');
 const forecastRoutes = require('./routes/forecastRoutes');
 const challengeRoutes = require('./routes/challengeRoutes');
 const userRoutes = require("./routes/userRoutes");
+const googleCalendarRoutes = require('./routes/googleCalendarRoutes');
 const { initWebsocket } = require('./services/websocket');
 const user = require("./models/user");
 const coachRoutes = require("./routes/coachRoutes");
@@ -125,6 +126,7 @@ app.use('/api/recommendations', recommendationRoutes);
 app.get("/", (req, res) => {
   res.send("Habitz API is running...");
 });
+app.use('/api/google-calendar', googleCalendarRoutes);
 app.use('/api/visualizer', visualizerRoutes);
 app.use('/api/forecast', forecastRoutes);
 app.use('/api/challenges', challengeRoutes);

@@ -8,7 +8,6 @@ import StatsCard from "../components/dashboard/StatsCard";
 import HabitRecommendations from "../components/dashboard/HabitRecommendation";
 import axios from "axios";
 import { toast } from "react-toastify";
-import StreakStaircase from "../components/dashboard/StreakStaircase";
 import QRCodeScanner from "../components/QR/QRCodeScanner";
 
 const Dashboard = () => {
@@ -25,8 +24,11 @@ const Dashboard = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [connectingCalendar, setConnectingCalendar] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [user, setUser] = useState(() =>
+    JSON.parse(localStorage.getItem("user"))
+  );
 
   useEffect(() => {
     fetchHabits();
@@ -178,6 +180,71 @@ const Dashboard = () => {
     }
   };
 
+  const connectGoogleCalendar = async () => {
+    try {
+      setConnectingCalendar(true);
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/google-calendar/auth-url`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Redirect to Google auth page
+      window.location.href = response.data.url;
+    } catch (error) {
+      console.error("Error starting Google Calendar connection:", error);
+      toast.error("Failed to start Google Calendar connection");
+      setConnectingCalendar(false);
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("googleCalendarConnected")) {
+      // Remove the param from the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      const fetchUser = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        try {
+          const res = await axios.get(
+            `${import.meta.env.VITE_API_URL}/api/users/me`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          localStorage.setItem("user", JSON.stringify(res.data));
+          setUser(res.data);
+        } catch (err) {
+          console.error("Error fetching user:", err); // Add this instead of ignoring
+          toast.error("Failed to update user profile");
+        }
+      };
+
+      // Sync all eligible habits
+      const syncAllHabits = async () => {
+        const token = localStorage.getItem("token");
+        try {
+          await axios.post(
+            `${import.meta.env.VITE_API_URL}/api/google-calendar/sync-all`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          toast.success("Google Calendar connected and habits synced!");
+          fetchHabits(); // Refresh habits list
+        } catch (err) {
+          toast.error("Failed to sync habits with Google Calendar");
+        }
+      };
+
+      fetchUser().then(syncAllHabits);
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#080808] text-[#f5f5f7] flex items-center justify-center">
@@ -204,16 +271,26 @@ const Dashboard = () => {
             </p>
           </div>
           <motion.button
-    onClick={() => setShowQRScanner(true)}
-    className="bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-4 py-2.5 rounded-lg text-sm flex items-center gap-2"
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-  >
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-    </svg>
-    Scan QR
-  </motion.button>
+            onClick={() => setShowQRScanner(true)}
+            className="bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-4 py-2.5 rounded-lg text-sm flex items-center gap-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+              />
+            </svg>
+            Scan QR
+          </motion.button>
           <motion.button
             onClick={() => setShowForm(true)}
             className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 py-2.5 rounded-full font-bold text-sm"
@@ -311,7 +388,11 @@ const Dashboard = () => {
                 transition={{ duration: 0.2 }}
               >
                 {activeTab === "habits" ? (
-                  <HabitList habits={habits} onHabitUpdate={fetchHabits} />
+                  <HabitList
+                    habits={habits}
+                    onHabitUpdate={fetchHabits}
+                    user={user}
+                  />
                 ) : activeTab === "streaks" ? (
                   <StreaksList habits={habits} />
                 ) : activeTab === "recommendations" ? (
@@ -334,17 +415,39 @@ const Dashboard = () => {
           <HabitForm
             onClose={() => setShowForm(false)}
             onSubmit={fetchHabits}
+            userGoogleCalendarConnected={Boolean(
+              user?.googleCalendar?.connected
+            )}
           />
+        )}
+
+        {!user?.googleCalendar?.connected && (
+          <div className="mb-4">
+            <button
+              onClick={connectGoogleCalendar}
+              disabled={connectingCalendar}
+              className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-4 py-2 rounded-lg font-medium flex items-center"
+            >
+              {connectingCalendar ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#080808] mr-2" />
+                  Connecting...
+                </>
+              ) : (
+                <>Connect Google Calendar</>
+              )}
+            </button>
+          </div>
         )}
       </main>
       <AnimatePresence>
-  {showQRScanner && (
-    <QRCodeScanner 
-      onClose={() => setShowQRScanner(false)} 
-      onSuccess={() => fetchHabits()} // Refresh habits after successful scan
-    />
-  )}
-</AnimatePresence>
+        {showQRScanner && (
+          <QRCodeScanner
+            onClose={() => setShowQRScanner(false)}
+            onSuccess={() => fetchHabits()} // Refresh habits after successful scan
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

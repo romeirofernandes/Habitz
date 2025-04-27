@@ -43,7 +43,7 @@ const habitSchema = new mongoose.Schema({
       default: true,
     },
     reminderTime: {
-      type: Number, 
+      type: Number,
       default: 15,
     },
     missedCheckEnabled: {
@@ -51,6 +51,11 @@ const habitSchema = new mongoose.Schema({
       default: true,
     },
   },
+  syncWithGoogleCalendar: {
+    type: Boolean,
+    default: false,
+  },
+  googleCalendarEventId: String,
 });
 
 habitSchema.virtual("completedToday").get(function () {

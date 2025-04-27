@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const HabitForm = ({ onClose, onSubmit }) => {
+const HabitForm = ({ onClose, onSubmit, userGoogleCalendarConnected }) => {
   const [formData, setFormData] = useState({
     name: "",
     frequency: "daily",
@@ -14,6 +14,7 @@ const HabitForm = ({ onClose, onSubmit }) => {
       reminderTime: 15,
       missedCheckEnabled: true,
     },
+    syncWithGoogleCalendar: false,
   });
   const [loading, setLoading] = useState(false);
 
@@ -193,6 +194,30 @@ const HabitForm = ({ onClose, onSubmit }) => {
                         className="w-5 h-5 accent-[#A2BFFE]"
                       />
                     </div>
+
+                    <div className="flex items-center justify-between p-3 bg-[#0a0a0a] rounded-lg mt-3">
+                      <label className="text-sm font-medium text-[#f5f5f7]/80">
+                        Sync with Google Calendar
+                      </label>
+                      <input
+                        type="checkbox"
+                        checked={formData.syncWithGoogleCalendar}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            syncWithGoogleCalendar: e.target.checked,
+                          })
+                        }
+                        className="w-5 h-5 accent-[#A2BFFE]"
+                        disabled={!userGoogleCalendarConnected}
+                      />
+                    </div>
+                    {!userGoogleCalendarConnected && (
+                      <p className="text-xs text-[#f5f5f7]/60 mt-2">
+                        Connect Google Calendar in settings to enable this
+                        feature
+                      </p>
+                    )}
                   </>
                 )}
               </div>

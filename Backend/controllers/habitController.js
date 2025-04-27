@@ -4,6 +4,10 @@ const { scheduleReminders } = require("../services/reminderService");
 const {
   notifyPartnerForMissedHabit,
 } = require("../services/notificationService");
+const {
+  addHabitToCalendar,
+  removeHabitFromCalendar,
+} = require("../services/googleCalendarService");
 
 // Update the createHabit function
 exports.createHabit = async (req, res) => {
@@ -13,12 +17,15 @@ exports.createHabit = async (req, res) => {
       user: req.user.id,
     });
     await habit.save();
-
     // Get user for email
     const user = await User.findById(req.user.id);
 
     // Schedule reminders
     await scheduleReminders(habit, user);
+
+    if (req.body.syncWithGoogleCalendar) {
+      await addHabitToCalendar(req.user.id, habit);
+    }
 
     res.status(201).json(habit);
   } catch (error) {
@@ -60,7 +67,7 @@ exports.getHabit = async (req, res) => {
 // Update a habit
 exports.updateHabit = async (req, res) => {
   try {
-    let habit = await Habit.findById(req.params.id);
+    const habit = await Habit.findById(req.params.id);
 
     if (!habit) {
       return res.status(404).json({ message: "Habit not found" });
@@ -70,21 +77,53 @@ exports.updateHabit = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    habit = await Habit.findByIdAndUpdate(
+    // If toggling Google Calendar sync
+    if (req.body.syncWithGoogleCalendar !== habit.syncWithGoogleCalendar) {
+      console.log("Syncing status changed:", {
+        old: habit.syncWithGoogleCalendar,
+        new: req.body.syncWithGoogleCalendar,
+      });
+
+      try {
+        if (req.body.syncWithGoogleCalendar) {
+          const result = await addHabitToCalendar(req.user.id, {
+            ...habit.toObject(),
+            ...req.body,
+          });
+          console.log("Calendar sync result:", result);
+          if (result.success) {
+            req.body.googleCalendarEventId = result.eventId;
+          } else {
+            console.error("Failed to sync with calendar:", result.error);
+          }
+        } else if (habit.googleCalendarEventId) {
+          await removeHabitFromCalendar(req.user.id, habit);
+          req.body.googleCalendarEventId = null;
+        }
+      } catch (error) {
+        console.error("Google Calendar sync error:", error);
+      }
+    }
+
+    // Update the habit with new data
+    const updatedHabit = await Habit.findByIdAndUpdate(
       req.params.id,
-      { ...req.body },
+      req.body,
       { new: true }
     );
 
-    // Update reminders if reminder settings changed
+    // Get user for reminders
+    const user = await User.findById(req.user.id);
+
+    // Reschedule reminders if reminder settings changed
     if (req.body.reminderSettings) {
-      const user = await User.findById(req.user.id);
-      await scheduleReminders(habit, user);
+      await scheduleReminders(updatedHabit, user);
     }
 
-    res.json(habit);
+    res.json(updatedHabit);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error("Habit update error:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -101,9 +140,23 @@ exports.deleteHabit = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
+    if (habit.syncWithGoogleCalendar && habit.googleCalendarEventId) {
+      try {
+        console.log("Removing habit from Google Calendar...");
+        const result = await removeHabitFromCalendar(req.user.id, habit);
+        if (!result.success) {
+          console.error("Failed to remove from calendar:", result.message);
+        }
+      } catch (error) {
+        console.error("Error removing from Google Calendar:", error);
+        // Continue with deletion even if calendar removal fails
+      }
+    }
+
     await habit.deleteOne();
     res.json({ message: "Habit deleted successfully" });
   } catch (error) {
+    console.error("Habit deletion error:", error);
     res.status(500).json({ message: error.message });
   }
 };
