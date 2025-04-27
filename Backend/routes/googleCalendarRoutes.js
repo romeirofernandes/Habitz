@@ -22,7 +22,7 @@ router.get("/callback", async (req, res) => {
     });
 
     res.redirect(
-      `${process.env.CLIENT_URL}/dashboard?googleCalendarConnected=1`
+      `https://habitz-three.vercel.app/dashboard?googleCalendarConnected=1`
     );
   } catch (error) {
     res.status(500).json({ message: error.message });
