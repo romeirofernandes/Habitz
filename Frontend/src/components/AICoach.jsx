@@ -1,66 +1,66 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const COACH_TYPES = {
   supportive: {
     name: "Coach Alex",
     description: "Supportive & encouraging",
     icon: "❤️",
-    color: "bg-green-500/20 text-green-400"
+    color: "bg-green-500/20 text-green-400",
   },
   strict: {
     name: "Coach Drill",
     description: "Strict & no-nonsense",
     icon: "💪",
-    color: "bg-red-500/20 text-red-400"
+    color: "bg-red-500/20 text-red-400",
   },
   funny: {
     name: "Coach Chuckles",
     description: "Witty & humorous",
     icon: "😄",
-    color: "bg-yellow-500/20 text-yellow-400"
+    color: "bg-yellow-500/20 text-yellow-400",
   },
   analytical: {
     name: "Coach Logic",
     description: "Data-driven & methodical",
     icon: "📊",
-    color: "bg-blue-500/20 text-blue-400"
+    color: "bg-blue-500/20 text-blue-400",
   },
   motivational: {
     name: "Coach Spark",
     description: "Energetic & inspiring",
     icon: "⚡",
-    color: "bg-purple-500/20 text-purple-400"
-  }
+    color: "bg-purple-500/20 text-purple-400",
+  },
 };
 
 const AICoach = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const [coachType, setCoachType] = useState('supportive');
+  const [coachType, setCoachType] = useState("supportive");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const [showPersonalitySelector, setShowPersonalitySelector] = useState(false);
 
   // Get stored messages from local storage
   useEffect(() => {
-    const storedMessages = localStorage.getItem('coachMessages');
+    const storedMessages = localStorage.getItem("coachMessages");
     if (storedMessages) {
       setMessages(JSON.parse(storedMessages));
     } else {
       // Add welcome message
       const welcomeMessage = {
         text: `Hi there! I'm ${COACH_TYPES[coachType].name}, your AI habit coach. How can I help with your habits today?`,
-        sender: 'coach',
+        sender: "coach",
         coachType,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
       setMessages([welcomeMessage]);
     }
-    
-    const storedCoachType = localStorage.getItem('coachType');
+
+    const storedCoachType = localStorage.getItem("coachType");
     if (storedCoachType) {
       setCoachType(storedCoachType);
     }
@@ -69,18 +69,18 @@ const AICoach = () => {
   // Save messages to local storage when they change
   useEffect(() => {
     if (messages.length > 0) {
-      localStorage.setItem('coachMessages', JSON.stringify(messages));
+      localStorage.setItem("coachMessages", JSON.stringify(messages));
     }
   }, [messages]);
 
   // Save coach type to local storage when it changes
   useEffect(() => {
-    localStorage.setItem('coachType', coachType);
+    localStorage.setItem("coachType", coachType);
   }, [coachType]);
 
   // Auto-scroll to the bottom when new messages are added
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSubmit = async (e) => {
@@ -91,12 +91,12 @@ const AICoach = () => {
     // Add user message to the chat
     const userMessage = {
       text: message,
-      sender: 'user',
-      timestamp: new Date().toISOString()
+      sender: "user",
+      timestamp: new Date().toISOString(),
     };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setMessage('');
+
+    setMessages((prev) => [...prev, userMessage]);
+    setMessage("");
     setLoading(true);
 
     try {
@@ -104,27 +104,27 @@ const AICoach = () => {
         `${import.meta.env.VITE_API_URL}/api/coach`,
         {
           message: message.trim(),
-          coachType
+          coachType,
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
       );
 
       // Add coach's response to the chat
       const coachMessage = {
         text: response.data.message,
-        sender: 'coach',
+        sender: "coach",
         coachType,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
-      
-      setMessages(prev => [...prev, coachMessage]);
+
+      setMessages((prev) => [...prev, coachMessage]);
     } catch (error) {
-      console.error('Error getting coach response:', error);
-      toast.error('Failed to get coach response');
+      console.error("Error getting coach response:", error);
+      toast.error("Failed to get coach response");
     } finally {
       setLoading(false);
     }
@@ -134,9 +134,9 @@ const AICoach = () => {
     // Add a new welcome message
     const welcomeMessage = {
       text: `Hi there! I'm ${COACH_TYPES[coachType].name}, your AI habit coach. How can I help with your habits today?`,
-      sender: 'coach',
+      sender: "coach",
       coachType,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
     setMessages([welcomeMessage]);
   };
@@ -144,35 +144,44 @@ const AICoach = () => {
   const changeCoachType = (newType) => {
     setCoachType(newType);
     setShowPersonalitySelector(false);
-    
+
     // Add coach transition message
     const transitionMessage = {
       text: `I'm now ${COACH_TYPES[newType].name}, your ${COACH_TYPES[newType].description} habit coach. How can I help you today?`,
-      sender: 'coach',
+      sender: "coach",
       coachType: newType,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
-    
-    setMessages(prev => [...prev, transitionMessage]);
+
+    setMessages((prev) => [...prev, transitionMessage]);
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       {/* Coach header */}
       <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full ${COACH_TYPES[coachType].color} flex items-center justify-center text-xl`}>
+            <motion.div
+              layoutId="coachIcon"
+              className={`w-10 h-10 rounded-full ${COACH_TYPES[coachType].color} flex items-center justify-center text-xl`}
+            >
               {COACH_TYPES[coachType].icon}
-            </div>
+            </motion.div>
             <div>
-              <h3 className="font-bold text-lg">{COACH_TYPES[coachType].name}</h3>
-              <p className="text-sm text-[#f5f5f7]/60">{COACH_TYPES[coachType].description}</p>
+              <h3 className="font-bold text-lg">
+                {COACH_TYPES[coachType].name}
+              </h3>
+              <p className="text-sm text-[#f5f5f7]/60">
+                {COACH_TYPES[coachType].description}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <motion.button
-              onClick={() => setShowPersonalitySelector(!showPersonalitySelector)}
+              onClick={() =>
+                setShowPersonalitySelector(!showPersonalitySelector)
+              }
               className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#222] text-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -189,63 +198,110 @@ const AICoach = () => {
             </motion.button>
           </div>
         </div>
-        
-        {/* Personality selector dropdown */}
-        {showPersonalitySelector && (
-          <motion.div 
-            className="mt-3 bg-[#1a1a1a] border border-[#222] rounded-lg p-2 absolute z-10 w-[calc(100%-3rem)]"
-            initial={{ opacity: 0, y: -10 }}
+      </div>
+
+      {/* Personality selector modal - now fixed position and centered */}
+      {showPersonalitySelector && (
+        <motion.div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-20 p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          onClick={() => setShowPersonalitySelector(false)}
+        >
+          <motion.div
+            className="bg-[#1a1a1a] border border-[#222] rounded-lg p-4 w-full max-w-md mx-auto"
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-sm text-[#f5f5f7]/60 mb-2">Select coach personality:</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-sm text-[#f5f5f7]/60">
+                Select coach personality:
+              </p>
+              <motion.button
+                onClick={() => setShowPersonalitySelector(false)}
+                className="p-1 rounded-full hover:bg-[#333]"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </motion.button>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
               {Object.entries(COACH_TYPES).map(([type, details]) => (
                 <motion.button
                   key={type}
-                  className={`flex items-center gap-2 p-2 rounded-lg hover:bg-[#222] text-left ${coachType === type ? 'border border-[#A2BFFE]' : ''}`}
+                  className={`flex items-center gap-3 p-3 rounded-lg hover:bg-[#222] text-left ${
+                    coachType === type ? "border border-[#A2BFFE]" : ""
+                  }`}
                   onClick={() => changeCoachType(type)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className={`w-8 h-8 rounded-full ${details.color} flex items-center justify-center text-lg`}>
+                  <motion.div
+                    layoutId={coachType === type ? "coachIcon" : null}
+                    className={`w-10 h-10 rounded-full ${details.color} flex items-center justify-center text-xl`}
+                  >
                     {details.icon}
-                  </div>
+                  </motion.div>
                   <div>
                     <p className="font-medium">{details.name}</p>
-                    <p className="text-xs text-[#f5f5f7]/60">{details.description}</p>
+                    <p className="text-xs text-[#f5f5f7]/60">
+                      {details.description}
+                    </p>
                   </div>
                 </motion.button>
               ))}
             </div>
           </motion.div>
-        )}
-      </div>
+        </motion.div>
+      )}
 
       {/* Chat messages */}
       <div className="flex-1 overflow-y-auto bg-[#0a0a0a] border border-[#222] rounded-xl p-4 mb-4">
         <div className="flex flex-col gap-4">
           {messages.map((msg, index) => (
-            <div 
-              key={index} 
-              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            <div
+              key={index}
+              className={`flex ${
+                msg.sender === "user" ? "justify-end" : "justify-start"
+              }`}
             >
-              <div 
+              <div
                 className={`max-w-[80%] p-3 rounded-lg ${
-                  msg.sender === 'user' 
-                    ? 'bg-[#A2BFFE] text-[#080808]' 
-                    : msg.coachType ? `${COACH_TYPES[msg.coachType].color} bg-opacity-20` : 'bg-[#1a1a1a]'
+                  msg.sender === "user"
+                    ? "bg-[#A2BFFE] text-[#080808]"
+                    : msg.coachType
+                    ? `${COACH_TYPES[msg.coachType].color} bg-opacity-20`
+                    : "bg-[#1a1a1a]"
                 }`}
               >
                 <p>{msg.text}</p>
                 <p className="text-xs mt-1 opacity-70">
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(msg.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
             </div>
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className={`max-w-[80%] p-3 rounded-lg ${COACH_TYPES[coachType].color} bg-opacity-20`}>
+              <div
+                className={`max-w-[80%] p-3 rounded-lg ${COACH_TYPES[coachType].color} bg-opacity-20`}
+              >
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-current animate-pulse"></div>
                   <div className="w-2 h-2 rounded-full bg-current animate-pulse delay-150"></div>
@@ -259,7 +315,10 @@ const AICoach = () => {
       </div>
 
       {/* Input form */}
-      <form onSubmit={handleSubmit} className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4"
+      >
         <div className="flex gap-2">
           <input
             type="text"
