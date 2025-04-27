@@ -160,7 +160,7 @@ const Challenges = () => {
     // Determine WebSocket URL based on environment
     const wsUrl = import.meta.env.DEV 
     ? `ws://localhost:8000` 
-    : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
+    : `https://hackhazard.onrender.com`;
     
   const socket = new WebSocket(wsUrl);
     
