@@ -10,7 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Progress from "./pages/Progress";
 import Sidebar from "./components/Sidebar";
 import Partners from "./pages/Partners";
-import Achievements from "./pages/Acievements";
+import Achievements from "./pages/Achievments";
 import UserProfile from "./components/dashboard/Profile";
 import HabitVisualizer from "./pages/HabitVisualizer";
 import Challenges from "./pages/Challenges";

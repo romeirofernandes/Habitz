@@ -23,7 +23,7 @@ import {
   Legend,
   Filler,
 } from "chart.js";
-import Achievements from "./Acievements";
+import Achievements from "./Achievments";
 import ShareProgress from "../components/Progress/ShareProgress";
 import ContributionGraph from "../components/Progress/ContributionGraph";
 
