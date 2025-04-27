@@ -50,7 +50,7 @@ const Achievements = () => {
           },
         }
       );
-      
+      console.log("Fetched habits:", response.data);
       setHabits(response.data);
     } catch (error) {
       console.error("Error fetching habits:", error);
