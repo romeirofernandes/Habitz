@@ -9,6 +9,7 @@ import HabitRecommendations from "../components/dashboard/HabitRecommendation";
 import axios from "axios";
 import { toast } from "react-toastify";
 import QRCodeScanner from "../components/QR/QRCodeScanner";
+import { subDays } from "date-fns";
 
 const Dashboard = () => {
   const [habits, setHabits] = useState([]);
@@ -70,16 +71,24 @@ const Dashboard = () => {
 
   const calculateStats = (habits) => {
     const totalHabits = habits.length;
-    const completedToday = habits.filter(
-      (habit) => habit.completedToday
-    ).length;
-    const completionRate = totalHabits
-      ? Math.round((completedToday / totalHabits) * 100)
-      : 0;
     const highestStreak = Math.max(
       ...habits.map((habit) => habit.currentStreak),
       0
     );
+
+    // Calculate completion rate for the last 7 days (like Progress page)
+    const totalOpportunities = totalHabits * 7;
+    const completedThisWeek = habits.reduce((total, habit) => {
+      const recentCompletions =
+        habit.completedDates?.filter(
+          (date) => new Date(date) > subDays(new Date(), 7)
+        ).length || 0;
+      return total + recentCompletions;
+    }, 0);
+
+    const completionRate = totalOpportunities
+      ? Math.round((completedThisWeek / totalOpportunities) * 100)
+      : 0;
 
     setStats({
       currentStreak: highestStreak,
