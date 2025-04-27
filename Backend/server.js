@@ -27,7 +27,8 @@ const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 const normalizedClientUrl = clientUrl.endsWith('/') ? clientUrl.slice(0, -1) : clientUrl;
 const allowedOrigins = [
   normalizedClientUrl,
-  "https://habitz-three.vercel.app"
+  "https://habitz-three.vercel.app",
+  "wss://habitz-three.vercel.app"
 ];
 // Initialize WebSocket with our HTTP server
 initWebsocket(httpServer);
