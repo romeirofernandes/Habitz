@@ -9,7 +9,7 @@ const Footer = () => {
           <p className="text-[#f5f5f7]/60 text-sm mb-4 md:mb-0">
             © {new Date().getFullYear()} Habitz
           </p>
-          <p className="text-[#f5f5f7]/60 text-sm">Crafted by Team SOS</p>
+          <p className="text-[#f5f5f7]/60 text-sm">Crafted by Team HackJS</p>
         </div>
       </div>
     </footer>
