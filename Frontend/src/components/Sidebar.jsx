@@ -14,14 +14,14 @@ const Sidebar = ({ children }) => {
       name: "Dashboard",
       icon: (
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
-          <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
-        </svg>
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-5 w-5"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
+        {/* Home/Dashboard icon */}
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+      </svg>
       ),
     },
     {
@@ -29,14 +29,14 @@ const Sidebar = ({ children }) => {
       name: "Progress",
       icon: (
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
-          <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
-        </svg>
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-5 w-5"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
+        {/* Chart/Progress icon */}
+        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+      </svg>
       ),
     },
     {
@@ -58,14 +58,15 @@ const Sidebar = ({ children }) => {
       name: "Achievements",
       icon: (
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
-          <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
-        </svg>
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-5 w-5"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
+        {/* Trophy/Achievement icon */}
+        <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.707.293l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L13.586 9H10a1 1 0 110-2h3.586l-2.293-2.293A1 1 0 0112 2z" clipRule="evenodd" />
+        <path d="M13 11a2 2 0 012 2v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4a2 2 0 012-2h2v-1a2 2 0 114 0v1h-1zm-2-3a1 1 0 00-1 1v1h2v-1a1 1 0 00-1-1z" />
+      </svg>
       ),
     },
     // Add to your navItems array:
