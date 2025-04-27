@@ -27,14 +27,18 @@ const Achievements = () => {
   }, []);
 
   useEffect(() => {
+    console.log("Fetched habits in use effect:", habits);
     if (habits.length > 0) {
       calculateStats();
+      console.log("Calculated stats:", stats);
     }
   }, [habits]);
 
   useEffect(() => {
+    console.log("Calculated stats in use effect:", stats);
     if (stats.totalHabits > 0) {
       evaluateAchievements();
+      console.log("Evaluated achievements:", achievements);
     }
   }, [stats]);
 
