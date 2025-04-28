@@ -417,8 +417,8 @@ const Progress = () => {
           <div
             className={`grid ${
               viewMode === "week"
-                ? "grid-cols-7"
-                : "grid-cols-10 overflow-x-auto"
+                ? "grid-cols-3 sm:grid-cols-7"
+                : "grid-cols-3 sm:grid-cols-10 overflow-x-auto"
             } gap-2`}
           >
             {weeklyData.map((day, index) => (
@@ -449,13 +449,15 @@ const Progress = () => {
           {habits.map((habit) => (
             <motion.div
               key={habit._id}
-              className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4"
+              className="bg-[#0a0a0a] border border-[#222] rounded-xl p-3 sm:p-4"
               whileHover={{ y: -2 }}
             >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-bold">{habit.name}</h3>
-                  <div className="flex gap-2 mt-1">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+                <div className="w-full sm:w-auto">
+                  <h3 className="font-bold text-base sm:text-lg">
+                    {habit.name}
+                  </h3>
+                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 mt-1">
                     <span className="text-sm text-[#f5f5f7]/60">
                       Current streak:
                       <span className="text-[#A2BFFE] ml-1">
@@ -463,15 +465,15 @@ const Progress = () => {
                       </span>
                     </span>
                     <span className="text-sm text-[#f5f5f7]/60">
-                      | Best:
+                      <span className="hidden sm:inline">| </span>Best:
                       <span className="text-[#A2BFFE] ml-1">
                         {habit.longestStreak} days
                       </span>
                     </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">
+                <div className="text-right w-full sm:w-auto mt-2 sm:mt-0">
+                  <div className="text-xl sm:text-2xl font-bold">
                     {habit.completedDates?.length || 0}
                   </div>
                   <p className="text-xs text-[#f5f5f7]/60">total completions</p>
@@ -499,7 +501,7 @@ const Progress = () => {
                     return (
                       <div
                         key={idx}
-                        className={`w-full h-2 rounded-full ${
+                        className={`flex-1 h-2 rounded-full ${
                           wasCompleted ? "bg-[#A2BFFE]" : "bg-[#222]"
                         }`}
                       ></div>
