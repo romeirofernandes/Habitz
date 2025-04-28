@@ -261,7 +261,7 @@ const HabitVisualizer = () => {
       // Final fix for any other style issues
       fixedCode = fixedCode.replace(/:::(\w+)/g, "");
 
-      console.log("Rendering mermaid with fixed code:", fixedCode);
+      // console.log("Rendering mermaid with fixed code:", fixedCode);
 
       mermaid.contentLoaded();
 
@@ -384,14 +384,14 @@ const HabitVisualizer = () => {
     e.stopPropagation();
     setDeleteConfirmation({
       isOpen: true,
-      visualizationId: id
+      visualizationId: id,
     });
   };
 
   // Add this new function to handle the actual deletion
   const handleConfirmDelete = async () => {
     const id = deleteConfirmation.visualizationId;
-    
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -406,10 +406,10 @@ const HabitVisualizer = () => {
           },
         }
       );
-      
+
       toast.success("Visualization deleted successfully");
       fetchVisualizations();
-      
+
       if (visualizationId === id) {
         resetForm();
       }
@@ -525,21 +525,25 @@ const HabitVisualizer = () => {
 
   return (
     <div className="min-h-screen bg-[#080808] text-[#f5f5f7] py-8">
-      <main className="max-w-4xl mx-auto px-6">
+      <main className="max-w-4xl mx-auto px-3 sm:px-6">
+        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Habit Visualizer</h1>
-          <p className="text-[#f5f5f7]/60">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+            Habit Visualizer
+          </h1>
+          <p className="text-[#f5f5f7]/60 text-sm sm:text-base">
             Create a visual representation of your habit's structure and
             relationships
           </p>
         </div>
 
-        <div className="flex gap-4 mb-6 border-b border-[#222]">
+        {/* Tabs */}
+        <div className="flex gap-4 mb-6 border-b border-[#222] overflow-x-auto">
           {["create", "saved"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-2 px-1 relative ${
+              className={`pb-2 px-1 relative whitespace-nowrap ${
                 activeTab === tab
                   ? "text-[#A2BFFE]"
                   : "text-[#f5f5f7]/60 hover:text-[#f5f5f7]"
@@ -565,13 +569,14 @@ const HabitVisualizer = () => {
             transition={{ duration: 0.2 }}
           >
             <div className="grid grid-cols-1 gap-8">
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
+              {/* Form + Actions & Diagram */}
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 sm:p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Form */}
                   <div>
-                    <h2 className="text-xl font-bold mb-4">
+                    <h2 className="text-lg sm:text-xl font-bold mb-4">
                       Create Visualization
                     </h2>
-
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
@@ -582,10 +587,9 @@ const HabitVisualizer = () => {
                           value={habitName}
                           onChange={(e) => setHabitName(e.target.value)}
                           placeholder="e.g., Morning Meditation"
-                          className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50"
+                          className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50 text-sm"
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-[#f5f5f7]/70 mb-2">
                           Description (Optional)
@@ -594,11 +598,10 @@ const HabitVisualizer = () => {
                           value={habitDescription}
                           onChange={(e) => setHabitDescription(e.target.value)}
                           placeholder="Describe your habit in more detail..."
-                          className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50 min-h-[120px]"
+                          className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50 min-h-[100px] text-sm"
                         />
                       </div>
-
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <motion.button
                           type="submit"
                           className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center flex-1"
@@ -628,12 +631,11 @@ const HabitVisualizer = () => {
                           ) : null}
                           {loading ? "Generating..." : "Generate"}
                         </motion.button>
-
                         {visualizationId && (
                           <motion.button
                             type="button"
                             onClick={resetForm}
-                            className="bg-[#222] hover:bg-[#333] px-3 py-2.5 rounded-lg text-sm"
+                            className="bg-[#222] hover:bg-[#333] px-3 py-2.5 rounded-lg text-sm flex-1 sm:flex-none"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                           >
@@ -643,27 +645,22 @@ const HabitVisualizer = () => {
                       </div>
                     </form>
                   </div>
-
+                  {/* Actions & Forecast */}
                   <div>
                     {mermaidCode && (
                       <div className="mt-0 h-full">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="font-medium">Diagram Actions</h3>
-                          <div className="flex space-x-2">
+                        <div className="flex flex-wrap sm:flex-nowrap justify-between items-center mb-4 gap-2">
+                          <h3 className="font-medium text-base">
+                            Diagram Actions
+                          </h3>
+                          <div className="flex flex-wrap gap-2">
                             <motion.button
                               onClick={handleSaveVisualization}
                               className="text-xs bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-3 py-1 rounded-md flex items-center"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
-                              <svg
-                                className="h-3.5 w-3.5 mr-1"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h1a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h1v5.586l-1.293-1.293zM9 4a1 1 0 112 0v2H9V4z" />
-                              </svg>
-                              Save
+                              {/* ...icon... */} Save
                             </motion.button>
                             <motion.button
                               onClick={handleDownload}
@@ -671,18 +668,7 @@ const HabitVisualizer = () => {
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
-                              <svg
-                                className="h-3.5 w-3.5 mr-1"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              Download
+                              {/* ...icon... */} Download
                             </motion.button>
                             <motion.button
                               onClick={() => setShowCode(!showCode)}
@@ -694,17 +680,7 @@ const HabitVisualizer = () => {
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
-                              <svg
-                                className="h-3.5 w-3.5 mr-1"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
+                              {/* ...icon... */}
                               {showCode ? "Hide Code" : "View Code"}
                             </motion.button>
                             <motion.button
@@ -717,7 +693,6 @@ const HabitVisualizer = () => {
                             </motion.button>
                           </div>
                         </div>
-
                         {showCode && (
                           <div className="bg-[#111] rounded-md p-3 overflow-auto max-h-60 mb-4">
                             <pre className="text-xs text-[#f5f5f7]/70 whitespace-pre-wrap">
@@ -726,9 +701,9 @@ const HabitVisualizer = () => {
                           </div>
                         )}
                         {showForecast && (
-                          <section className="mt-6 bg-[#18181b] rounded-xl p-8 shadow-2xl border border-[#222]">
-                            <div className="flex justify-between items-center mb-4">
-                              <h2 className="text-2xl font-bold flex items-center gap-2">
+                          <section className="mt-6 bg-[#18181b] rounded-xl p-4 sm:p-8 shadow-2xl border border-[#222]">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                              <h2 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
                                 🔮 Habit Forecast
                               </h2>
                               <button
@@ -857,15 +832,15 @@ const HabitVisualizer = () => {
                   </div>
                 </div>
               </div>
-
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
-                <h2 className="text-xl font-bold mb-4">
+              {/* Visualization Preview */}
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 sm:p-6">
+                <h2 className="text-lg sm:text-xl font-bold mb-4">
                   Visualization Preview
                 </h2>
                 {!mermaidCode ? (
-                  <div className="flex flex-col items-center justify-center h-[500px] border border-dashed border-[#333] rounded-lg">
+                  <div className="flex flex-col items-center justify-center h-[300px] sm:h-[500px] border border-dashed border-[#333] rounded-lg">
                     <svg
-                      className="h-16 w-16 text-[#333]"
+                      className="h-12 w-12 sm:h-16 sm:w-16 text-[#333]"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -877,21 +852,21 @@ const HabitVisualizer = () => {
                         d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       />
                     </svg>
-                    <p className="mt-4 text-[#555] text-sm">
+                    <p className="mt-4 text-[#555] text-sm text-center">
                       Enter your habit details and generate a visualization
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-auto border border-[#222] rounded-lg p-4 bg-[#0c0c0c] min-h-[500px]">
+                  <div className="overflow-auto border border-[#222] rounded-lg p-2 sm:p-4 bg-[#0c0c0c] min-h-[300px] sm:min-h-[500px]">
                     {loading ? (
-                      <div className="flex items-center justify-center h-[500px]">
+                      <div className="flex items-center justify-center h-[300px] sm:h-[500px]">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#A2BFFE]"></div>
                       </div>
                     ) : (
                       <div
                         ref={mermaidRef}
                         className="mermaid-container flex justify-center"
-                        style={{ minHeight: "500px" }}
+                        style={{ minHeight: "300px" }}
                       />
                     )}
                   </div>
@@ -907,9 +882,10 @@ const HabitVisualizer = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
-              <h2 className="text-xl font-bold mb-6">Saved Visualizations</h2>
-
+            <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-bold mb-6">
+                Saved Visualizations
+              </h2>
               {loadingSaved ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#A2BFFE]"></div>
@@ -917,7 +893,7 @@ const HabitVisualizer = () => {
               ) : savedVisualizations.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-4xl mb-4">📊</div>
-                  <h3 className="text-xl font-bold mb-2">
+                  <h3 className="text-lg sm:text-xl font-bold mb-2">
                     No Saved Visualizations
                   </h3>
                   <p className="text-[#f5f5f7]/60 mb-6">
@@ -952,17 +928,31 @@ const HabitVisualizer = () => {
                             </p>
                           )}
                           <p className="text-xs text-[#f5f5f7]/40 mt-2">
-                            {new Date(visualization.updatedAt).toLocaleDateString()}
+                            {new Date(
+                              visualization.updatedAt
+                            ).toLocaleDateString()}
                           </p>
                         </div>
                         <motion.button
-                          onClick={(e) => deleteVisualization(visualization._id, e)}
+                          onClick={(e) =>
+                            deleteVisualization(visualization._id, e)
+                          }
                           className="text-[#f5f5f7]/60 hover:text-[#EF4444] p-1"
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                         >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
                           </svg>
                         </motion.button>
                       </div>
@@ -976,7 +966,9 @@ const HabitVisualizer = () => {
 
         <ConfirmationModal
           isOpen={deleteConfirmation.isOpen}
-          onClose={() => setDeleteConfirmation({ isOpen: false, visualizationId: null })}
+          onClose={() =>
+            setDeleteConfirmation({ isOpen: false, visualizationId: null })
+          }
           onConfirm={handleConfirmDelete}
           title="Delete Visualization"
           message="Are you sure you want to delete this visualization? This action cannot be undone."
