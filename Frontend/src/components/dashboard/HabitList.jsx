@@ -121,10 +121,10 @@ const HabitList = ({ habits, onHabitUpdate, user }) => {
           key={habit._id}
           className={`bg-[#0a0a0a] border ${
             habit.completedToday ? "border-[#222] opacity-75" : "border-[#222]"
-          } rounded-xl p-4 flex items-center justify-between transition-all duration-200`}
+          } rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between transition-all duration-200 gap-4`}
           whileHover={{ y: habit.completedToday ? 0 : -2 }}
         >
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
             <motion.button
               onClick={() => handleCheck(habit._id)}
               disabled={habit.completedToday || completingHabitId === habit._id}
@@ -154,16 +154,16 @@ const HabitList = ({ habits, onHabitUpdate, user }) => {
               )}
             </motion.button>
 
-            <div>
+            <div className="min-w-0">
               <h3
-                className={`font-bold ${
+                className={`font-bold text-base sm:text-lg ${
                   habit.completedToday ? "line-through text-[#f5f5f7]/40" : ""
                 }`}
               >
                 {habit.name}
               </h3>
               <p
-                className={`text-sm ${
+                className={`text-xs sm:text-sm ${
                   habit.completedToday
                     ? "text-[#f5f5f7]/40"
                     : "text-[#f5f5f7]/60"
@@ -175,8 +175,8 @@ const HabitList = ({ habits, onHabitUpdate, user }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-[#f5f5f7]/60">
+          <div className="flex flex-wrap gap-2 sm:gap-4 items-center justify-end mt-2 sm:mt-0">
+            <div className="text-xs sm:text-sm text-[#f5f5f7]/60">
               <span className="font-medium text-[#A2BFFE]">
                 {habit.currentStreak}
               </span>{" "}
@@ -188,7 +188,7 @@ const HabitList = ({ habits, onHabitUpdate, user }) => {
                 setSelectedHabit(habit);
                 setShowQRGenerator(true);
               }}
-              className="ml-2 p-1 rounded-full hover:bg-[#222] text-[#f5f5f7]/60"
+              className="p-1 rounded-full hover:bg-[#222] text-[#f5f5f7]/60"
             >
               <svg
                 className="w-4 h-4"

@@ -26,9 +26,6 @@ const HabitEditor = ({
     syncWithGoogleCalendar: habit.syncWithGoogleCalendar || false,
   });
 
-  console.log("Google Calendar connected status:", userGoogleCalendarConnected);
-  console.log("Initial habit sync value:", habit.syncWithGoogleCalendar);
-
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);

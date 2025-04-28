@@ -129,6 +129,10 @@ function App() {
           color: "#f5f5f7",
           borderRadius: "12px",
           border: "1px solid #222",
+          marginTop: window.innerWidth < 640 ? "1rem" : "0.5rem",
+          marginRight: window.innerWidth < 640 ? "0.5rem" : "1.5rem",
+          maxWidth: "90vw",
+          minWidth: "200px",
         }}
       />
     </BrowserRouter>

@@ -264,13 +264,13 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#080808] text-[#f5f5f7]">
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
               yo, {user?.username || "User"}! 👋
             </h1>
-            <p className="text-[#f5f5f7]/60">
+            <p className="text-[#f5f5f7]/60 text-sm sm:text-base">
               {new Date().toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",
@@ -279,39 +279,41 @@ const Dashboard = () => {
               })}
             </p>
           </div>
-          <motion.button
-            onClick={() => setShowQRScanner(true)}
-            className="bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-4 py-2.5 rounded-lg text-sm flex items-center gap-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
+            <motion.button
+              onClick={() => setShowQRScanner(true)}
+              className="bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-4 py-2.5 rounded-lg text-sm flex items-center gap-2 w-full sm:w-auto"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-              />
-            </svg>
-            Scan QR
-          </motion.button>
-          <motion.button
-            onClick={() => setShowForm(true)}
-            className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 py-2.5 rounded-full font-bold text-sm"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Create New Habit
-          </motion.button>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                />
+              </svg>
+              Scan QR
+            </motion.button>
+            <motion.button
+              onClick={() => setShowForm(true)}
+              className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 py-2.5 rounded-full font-bold text-sm w-full sm:w-auto"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Create New Habit
+            </motion.button>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           <StatsCard
             title="Current Streak"
             value={`${stats.currentStreak} days`}
@@ -359,7 +361,7 @@ const Dashboard = () => {
         {/* After Stats Cards */}
         {!error && habits.length > 0 && (
           <>
-            <div className="flex gap-4 mb-6 border-b border-[#222]">
+            <div className="flex gap-2 sm:gap-4 mb-6 border-b border-[#222] overflow-x-auto">
               {["habits", "streaks", "recommendations", "forest"].map((tab) => (
                 <button
                   key={tab}
