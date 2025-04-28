@@ -386,18 +386,18 @@ const Achievements = () => {
   return (
     <div className="min-h-screen bg-[#080808] text-[#f5f5f7] py-8">
       <main className="max-w-4xl mx-auto px-6">
-        <div className="flex justify-between items-center mb-6">
+        {/* Responsive Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Achievements</h1>
-            <p className="text-[#f5f5f7]/60">
+            <h1 className="text-2xl sm:text-3xl font-bold">Achievements</h1>
+            <p className="text-[#f5f5f7]/60 text-sm sm:text-base">
               You've unlocked {unlockedCount} of {achievements.length}{" "}
               achievements ({percentage}%)
             </p>
           </div>
-
-          <Link to="/progress">
+          <Link to="/progress" className="w-full sm:w-auto">
             <motion.button
-              className="flex items-center gap-2 px-4 py-2 bg-[#0a0a0a] border border-[#222] rounded-lg hover:border-[#A2BFFE]/30 text-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#0a0a0a] border border-[#222] rounded-lg hover:border-[#A2BFFE]/30 text-sm w-full sm:w-auto mt-3 sm:mt-0"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
             >
@@ -419,12 +419,12 @@ const Achievements = () => {
         </div>
 
         {/* Achievement Progress */}
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6 mb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-            <h2 className="text-xl font-bold mb-2 sm:mb-0">
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+            <h2 className="text-lg sm:text-xl font-bold mb-2 sm:mb-0">
               Your Achievement Progress
             </h2>
-            <div className="bg-[#A2BFFE]/10 rounded-full px-4 py-1">
+            <div className="bg-[#A2BFFE]/10 rounded-full px-4 py-1 w-full sm:w-auto text-center sm:text-left">
               <span className="text-sm font-medium text-[#A2BFFE]">
                 {percentage}% Complete
               </span>
