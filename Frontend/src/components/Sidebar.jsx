@@ -206,7 +206,13 @@ const Sidebar = ({ children }) => {
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
-              <Link to={item.path} key={item.path}>
+              <Link
+                to={item.path}
+                key={item.path}
+                onClick={() => {
+                  if (window.innerWidth < 640) setIsCollapsed(true);
+                }}
+              >
                 <motion.div
                   className={`flex items-center gap-3 px-3 py-3 rounded-lg mb-2 ${
                     isActive

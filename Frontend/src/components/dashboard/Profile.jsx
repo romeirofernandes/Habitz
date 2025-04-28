@@ -78,20 +78,20 @@ const UserProfile = ({ userId: propsUserId, isOwnProfile }) => {
 
   return (
     <div className="min-h-screen bg-[#080808] text-[#f5f5f7] py-8">
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6">
         {/* Profile Header */}
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6 mb-6">
-          <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-[#A2BFFE] flex items-center justify-center">
-              <span className="text-4xl font-bold text-[#080808]">
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#A2BFFE] flex items-center justify-center">
+              <span className="text-3xl sm:text-4xl font-bold text-[#080808]">
                 {profile?.username?.[0]?.toUpperCase()}
               </span>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold mb-2">
+            <div className="text-center sm:text-left">
+              <h1 className="text-xl sm:text-2xl font-bold mb-2">
                 {profile?.username || "Loading..."}
               </h1>
-              <p className="text-[#f5f5f7]/60">
+              <p className="text-[#f5f5f7]/60 text-sm sm:text-base">
                 {profile?.email || "Loading..."}
               </p>
             </div>
@@ -100,7 +100,7 @@ const UserProfile = ({ userId: propsUserId, isOwnProfile }) => {
 
         {/* Stats Grid */}
         {isOwnProfile && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
             <StatCard
               icon={<FaTrophy />}
               title="Total Habits"
@@ -126,24 +126,26 @@ const UserProfile = ({ userId: propsUserId, isOwnProfile }) => {
 
         {/* Habits List */}
         {isOwnProfile && habits.length > 0 && (
-          <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
-            <h2 className="text-xl font-bold mb-4">Your Habits</h2>
+          <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Your Habits</h2>
             <div className="space-y-4">
               {habits.map((habit) => (
                 <motion.div
                   key={habit._id}
-                  className="bg-[#1a1a1a] rounded-lg p-4"
+                  className="bg-[#1a1a1a] rounded-lg p-3 sm:p-4"
                   whileHover={{ y: -2 }}
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
                       <h3 className="font-bold">{habit.name}</h3>
                       <p className="text-sm text-[#f5f5f7]/60">
                         {habit.description}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-[#f5f5f7]/60">Streak</p>
+                    <div className="text-left sm:text-right mt-2 sm:mt-0">
+                      <p className="text-xs sm:text-sm text-[#f5f5f7]/60">
+                        Streak
+                      </p>
                       <p className="text-lg font-bold text-[#A2BFFE]">
                         {habit.currentStreak || 0} days
                       </p>

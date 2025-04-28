@@ -271,28 +271,31 @@ const Challenges = () => {
 
   return (
     <div className="min-h-screen bg-[#080808] text-[#f5f5f7] py-8">
-      <main className="max-w-4xl mx-auto px-6">
-        <div className="flex justify-between items-center mb-6">
+      <main className="max-w-4xl mx-auto px-3 sm:px-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Social Challenges</h1>
-            <p className="text-[#f5f5f7]/60">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+              Social Challenges
+            </h1>
+            <p className="text-[#f5f5f7]/60 text-sm sm:text-base">
               Join challenges and build habits together
             </p>
           </div>
-
           <motion.button
             onClick={() => setShowCreateModal(true)}
-            className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 py-2.5 rounded-lg font-bold text-sm"
+            className="w-full sm:w-auto bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 py-2.5 rounded-lg font-bold text-sm mt-3 sm:mt-0"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             Create Challenge
           </motion.button>
         </div>
-        <div className="flex gap-2 mb-4">
+        {/* QR/Tab Controls */}
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
           <motion.button
             onClick={() => setShowQRScanner(true)}
-            className="bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-4 py-2.5 rounded-lg text-sm flex items-center gap-2"
+            className="bg-[#222] hover:bg-[#333] text-[#f5f5f7] px-4 py-2.5 rounded-lg text-sm flex items-center gap-2 w-full sm:w-auto"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -312,13 +315,13 @@ const Challenges = () => {
             Scan QR
           </motion.button>
         </div>
-        {/* Tabs - Only showing main tabs */}
-        <div className="flex gap-4 mb-6 border-b border-[#222]">
+        {/* Tabs */}
+        <div className="flex gap-4 mb-6 border-b border-[#222] overflow-x-auto">
           {["explore", "my-challenges", "live-updates"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-2 px-1 relative ${
+              className={`pb-2 px-1 relative whitespace-nowrap ${
                 activeTab === tab
                   ? "text-[#A2BFFE]"
                   : "text-[#f5f5f7]/60 hover:text-[#f5f5f7]"
@@ -338,7 +341,6 @@ const Challenges = () => {
             </button>
           ))}
         </div>
-
         {/* Content based on active tab */}
         <AnimatePresence mode="wait">
           {activeTab === "explore" && (
