@@ -182,9 +182,9 @@ const PartnersSection = () => {
   return (
     <div className="space-y-6">
       {/* Search Section */}
-      <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
+      <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 sm:p-6">
         <h3 className="text-xl font-bold mb-4">Find Partners</h3>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={searchTerm}
@@ -209,7 +209,7 @@ const PartnersSection = () => {
             {searchResults.map((user) => (
               <div
                 key={user._id}
-                className="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-lg"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-[#1a1a1a] rounded-lg gap-2"
               >
                 <div>
                   <p className="font-medium">{user.username}</p>
@@ -217,7 +217,7 @@ const PartnersSection = () => {
                 </div>
                 <motion.button
                   onClick={() => sendPartnerRequest(user._id)}
-                  className="text-sm bg-[#A2BFFE]/20 text-[#A2BFFE] px-3 py-1.5 rounded-md"
+                  className="w-full sm:w-auto text-sm bg-[#A2BFFE]/20 text-[#A2BFFE] px-3 py-1.5 rounded-md mt-2 sm:mt-0"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -231,13 +231,13 @@ const PartnersSection = () => {
 
       {/* Pending Requests */}
       {pendingRequests.length > 0 && (
-        <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-6">
+        <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 sm:p-6">
           <h3 className="text-xl font-bold mb-4">Pending Requests</h3>
           <div className="space-y-3">
             {pendingRequests.map((request) => (
               <div
                 key={request._id}
-                className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-[#1a1a1a] rounded-lg gap-2"
               >
                 <div>
                   <p className="font-medium">{request.user.username}</p>
@@ -278,7 +278,6 @@ const PartnersSection = () => {
           </p>
         ) : (
           partners.map((partnership) => {
-            // Change this to correctly identify the partner
             const partner =
               partnership.user._id === currentUser.id
                 ? partnership.partner
@@ -288,7 +287,7 @@ const PartnersSection = () => {
             return (
               <div
                 key={partnership._id}
-                className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-[#1a1a1a] rounded-lg gap-2"
               >
                 <div>
                   <p className="font-medium">{partner.username}</p>
