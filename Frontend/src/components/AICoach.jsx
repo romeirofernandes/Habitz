@@ -159,8 +159,8 @@ const AICoach = () => {
   return (
     <div className="flex flex-col h-full relative">
       {/* Coach header */}
-      <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 mb-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-[#0a0a0a] border border-[#222] rounded-xl p-2 md:p-4 mb-2 md:mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <motion.div
               layoutId="coachIcon"
@@ -177,12 +177,12 @@ const AICoach = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <motion.button
               onClick={() =>
                 setShowPersonalitySelector(!showPersonalitySelector)
               }
-              className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#222] text-sm"
+              className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#222] text-sm w-full sm:w-auto"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -190,7 +190,7 @@ const AICoach = () => {
             </motion.button>
             <motion.button
               onClick={clearChat}
-              className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#222] text-sm"
+              className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#222] text-sm w-full sm:w-auto"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -203,18 +203,18 @@ const AICoach = () => {
       {/* Personality selector modal - now fixed position and centered */}
       {showPersonalitySelector && (
         <motion.div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-20 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-20 p-2 sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           onClick={() => setShowPersonalitySelector(false)}
         >
           <motion.div
-            className="bg-[#1a1a1a] border border-[#222] rounded-lg p-4 w-full max-w-md mx-auto"
+            className="bg-[#1a1a1a] border border-[#222] rounded-lg p-2 sm:p-4 w-full max-w-md sm:max-w-lg mx-auto"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-2 sm:mb-4">
               <p className="text-sm text-[#f5f5f7]/60">
                 Select coach personality:
               </p>
@@ -224,6 +224,7 @@ const AICoach = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
+                {/* ...existing SVG... */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5"
@@ -238,11 +239,11 @@ const AICoach = () => {
                 </svg>
               </motion.button>
             </div>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-2 sm:gap-3">
               {Object.entries(COACH_TYPES).map(([type, details]) => (
                 <motion.button
                   key={type}
-                  className={`flex items-center gap-3 p-3 rounded-lg hover:bg-[#222] text-left ${
+                  className={`flex items-center gap-3 p-2 sm:p-3 rounded-lg hover:bg-[#222] text-left ${
                     coachType === type ? "border border-[#A2BFFE]" : ""
                   }`}
                   onClick={() => changeCoachType(type)}
@@ -269,8 +270,8 @@ const AICoach = () => {
       )}
 
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto bg-[#0a0a0a] border border-[#222] rounded-xl p-4 mb-4">
-        <div className="flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto bg-[#0a0a0a] border border-[#222] rounded-xl p-2 md:p-4 mb-2 md:mb-4">
+        <div className="flex flex-col gap-3 md:gap-4">
           {messages.map((msg, index) => (
             <div
               key={index}
@@ -279,7 +280,7 @@ const AICoach = () => {
               }`}
             >
               <div
-                className={`max-w-[80%] p-3 rounded-lg ${
+                className={`max-w-[90%] sm:max-w-[80%] p-2 md:p-3 rounded-lg ${
                   msg.sender === "user"
                     ? "bg-[#A2BFFE] text-[#080808]"
                     : msg.coachType
@@ -300,7 +301,7 @@ const AICoach = () => {
           {loading && (
             <div className="flex justify-start">
               <div
-                className={`max-w-[80%] p-3 rounded-lg ${COACH_TYPES[coachType].color} bg-opacity-20`}
+                className={`max-w-[90%] sm:max-w-[80%] p-2 md:p-3 rounded-lg ${COACH_TYPES[coachType].color} bg-opacity-20`}
               >
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-current animate-pulse"></div>
@@ -317,15 +318,15 @@ const AICoach = () => {
       {/* Input form */}
       <form
         onSubmit={handleSubmit}
-        className="bg-[#0a0a0a] border border-[#222] rounded-xl p-4"
+        className="bg-[#0a0a0a] border border-[#222] rounded-xl p-2 md:p-4"
       >
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Ask your habit coach for advice..."
-            className="flex-1 bg-[#1a1a1a] text-[#f5f5f7] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50"
+            className="flex-1 bg-[#1a1a1a] text-[#f5f5f7] rounded-lg px-3 py-2 md:px-4 md:py-2 focus:outline-none focus:ring-2 focus:ring-[#A2BFFE]/50"
             disabled={loading}
           />
           <motion.button

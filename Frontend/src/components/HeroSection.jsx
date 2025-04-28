@@ -12,14 +12,22 @@ const HeroSection = () => {
     }
   };
 
+  // Responsive grid: fewer dots on mobile for performance
+  const isMobile = window.innerWidth < 640;
+  const cols = isMobile ? 16 : 40;
+  const rows = isMobile ? 32 : 20;
+  const totalDots = cols * rows;
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 grid grid-cols-[repeat(40,1fr)] grid-rows-[repeat(20,1fr)] opacity-50">
-          {[...Array(900)].map((_, i) => {
-            const row = Math.floor(i / 40);
-            const col = i % 40;
+        <div
+          className={`absolute inset-0 grid grid-cols-[repeat(${cols},1fr)] grid-rows-[repeat(${rows},1fr)] opacity-50`}
+        >
+          {[...Array(totalDots)].map((_, i) => {
+            const row = Math.floor(i / cols);
+            const col = i % cols;
             const delay = (row + col) * 0.02;
 
             return (
@@ -46,13 +54,13 @@ const HeroSection = () => {
 
       {/* Hero Content */}
       <motion.div
-        className="relative z-10 max-w-4xl mx-auto text-center px-6"
+        className="relative z-10 max-w-2xl md:max-w-4xl mx-auto text-center px-4 sm:px-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
         <motion.h1
-          className="text-5xl md:text-7xl font-bold mb-6"
+          className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -61,7 +69,7 @@ const HeroSection = () => {
         </motion.h1>
 
         <motion.p
-          className="text-[#f5f5f7]/80 text-lg md:text-xl mb-10 max-w-2xl mx-auto"
+          className="text-[#f5f5f7]/80 text-base sm:text-lg md:text-xl mb-8 sm:mb-10 max-w-xl md:max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
@@ -71,13 +79,13 @@ const HeroSection = () => {
         </motion.p>
 
         <motion.div
-          className="flex flex-col sm:flex-row gap-4 justify-center"
+          className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
         >
           <motion.button
-            className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 py-3 rounded-md font-bold"
+            className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-6 sm:px-8 py-3 sm:py-4 rounded-md font-bold text-base sm:text-lg w-full sm:w-auto"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
@@ -87,7 +95,7 @@ const HeroSection = () => {
             Get Started
           </motion.button>
           <motion.button
-            className="border border-[#f5f5f7]/20 hover:border-[#A2BFFE] text-[#f5f5f7] px-6 py-3 rounded-md font-medium"
+            className="border border-[#f5f5f7]/20 hover:border-[#A2BFFE] text-[#f5f5f7] px-6 sm:px-8 py-3 sm:py-4 rounded-md font-medium text-base sm:text-lg w-full sm:w-auto"
             whileHover={{
               scale: 1.05,
               borderColor: "rgba(162, 191, 254, 0.5)",

@@ -21,7 +21,7 @@ const ConfirmationModal = ({
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="bg-[#0a0a0a] rounded-xl p-6 w-full max-w-md border border-[#222]"
+        className="bg-[#0a0a0a] rounded-xl p-4 sm:p-6 w-full max-w-xs sm:max-w-md border border-[#222]"
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
@@ -29,7 +29,7 @@ const ConfirmationModal = ({
         <h3 className="text-xl font-bold mb-4">{title}</h3>
         <p className="text-[#f5f5f7]/70 mb-6">{message}</p>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <motion.button
             type="button"
             onClick={onConfirm}
