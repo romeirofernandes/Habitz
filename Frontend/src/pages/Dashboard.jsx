@@ -437,7 +437,7 @@ const Dashboard = () => {
             <button
               onClick={connectGoogleCalendar}
               disabled={connectingCalendar}
-              className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-4 py-2 rounded-lg font-medium flex items-center"
+              className="bg-[#A2BFFE] hover:bg-[#91AFFE] text-[#080808] px-4 py-2 rounded-lg font-semibold flex items-center"
             >
               {connectingCalendar ? (
                 <>
