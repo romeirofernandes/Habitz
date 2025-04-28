@@ -20,7 +20,7 @@ const StreaksList = ({ habits }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mb-8">
       {/* Featured Streak - Show highest streak or selected habit */}
       {(selectedHabit || highestStreakHabit) && (
         <div className="mb-8">
@@ -32,7 +32,7 @@ const StreaksList = ({ habits }) => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-xl font-bold mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4">
                 {selectedHabit
                   ? `${selectedHabit.name} Streak Journey`
                   : "Your Top Streak"}
@@ -50,7 +50,7 @@ const StreaksList = ({ habits }) => {
       )}
 
       {/* List of all habits */}
-      <h3 className="text-xl font-bold mb-4">All Habit Streaks</h3>
+      <h3 className="text-xl sm:text-2xl font-bold mb-4">All Habit Streaks</h3>
       <div className="space-y-4">
         {habits.map((habit) => (
           <motion.div
@@ -59,39 +59,41 @@ const StreaksList = ({ habits }) => {
               selectedHabit?._id === habit._id
                 ? "border-[#A2BFFE]"
                 : "border-[#222]"
-            } rounded-xl p-4 cursor-pointer`}
+            } rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between cursor-pointer`}
             whileHover={{ y: -2 }}
             onClick={() => handleHabitSelect(habit)}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-2">
               <div>
-                <h3 className="font-bold text-lg">{habit.name}</h3>
-                <p className="text-sm text-[#f5f5f7]/60">
+                <h3 className="font-bold text-lg sm:text-xl">{habit.name}</h3>
+                <p className="text-sm sm:text-base text-[#f5f5f7]/60">
                   {habit.frequency} •{" "}
                   {format(new Date(`2000-01-01T${habit.timeOfDay}`), "h:mm a")}
                 </p>
               </div>
-              <div className="text-right">
-                <div className="flex items-center gap-2">
-                  <div>
-                    <p className="text-sm text-[#f5f5f7]/60">Current</p>
-                    <p className="text-xl font-bold text-[#A2BFFE]">
-                      {habit.currentStreak}
-                      <span className="text-sm text-[#f5f5f7]/60 ml-1">
-                        days
-                      </span>
-                    </p>
-                  </div>
-                  <div className="h-10 w-px bg-[#222]" />
-                  <div>
-                    <p className="text-sm text-[#f5f5f7]/60">Longest</p>
-                    <p className="text-xl font-bold text-[#A2BFFE]">
-                      {habit.longestStreak}
-                      <span className="text-sm text-[#f5f5f7]/60 ml-1">
-                        days
-                      </span>
-                    </p>
-                  </div>
+              <div className="flex flex-row items-center gap-2 mt-2 sm:mt-0">
+                <div>
+                  <p className="text-xs sm:text-sm text-[#f5f5f7]/60">
+                    Current
+                  </p>
+                  <p className="text-lg sm:text-xl font-bold text-[#A2BFFE]">
+                    {habit.currentStreak}
+                    <span className="text-xs sm:text-sm text-[#f5f5f7]/60 ml-1">
+                      days
+                    </span>
+                  </p>
+                </div>
+                <div className="h-8 sm:h-10 w-px bg-[#222]" />
+                <div>
+                  <p className="text-xs sm:text-sm text-[#f5f5f7]/60">
+                    Longest
+                  </p>
+                  <p className="text-lg sm:text-xl font-bold text-[#A2BFFE]">
+                    {habit.longestStreak}
+                    <span className="text-xs sm:text-sm text-[#f5f5f7]/60 ml-1">
+                      days
+                    </span>
+                  </p>
                 </div>
               </div>
             </div>

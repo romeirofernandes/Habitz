@@ -55,21 +55,33 @@ const StreakStaircase2 = ({ streak = 0 }) => {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 6 });
   const [animation, setAnimation] = useState(true);
 
-  // Calculate what steps should be visible
+  // Helper to detect mobile
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+
   useEffect(() => {
-    if (streak <= 7) {
-      setVisibleRange({ start: 0, end: 7 });
+    if (isMobile) {
+      // Show only 3 steps at a time on mobile
+      if (streak <= 3) {
+        setVisibleRange({ start: 0, end: 3 });
+      } else {
+        const end = streak;
+        const start = Math.max(0, end - 3);
+        setVisibleRange({ start, end });
+      }
     } else {
-      // Show the most recent 6 steps, centered around current streak day
-      const end = streak;
-      const start = Math.max(0, end - 7);
-      setVisibleRange({ start, end });
+      // Desktop/tablet: show up to 7 steps
+      if (streak <= 7) {
+        setVisibleRange({ start: 0, end: 7 });
+      } else {
+        const end = streak;
+        const start = Math.max(0, end - 7);
+        setVisibleRange({ start, end });
+      }
     }
 
-    // Disable initial animation after first render
     const timer = setTimeout(() => setAnimation(false), 2000);
     return () => clearTimeout(timer);
-  }, [streak]);
+  }, [streak, isMobile]);
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-black rounded-xl shadow-2xl border border-[#222] p-6 h-[400px]">
@@ -313,13 +325,12 @@ const StreakStaircase2 = ({ streak = 0 }) => {
         </div>
       </div>
 
-      {/* Footer with legend */}
       <div className="absolute bottom-0 left-0 right-0 bg-[#0a0a0a]/50 backdrop-blur-sm border-t border-[#222] p-3">
-        <div className="flex items-center justify-center gap-3 text-xs text-[#f5f5f7]/60">
+        <div className="flex flex-row xs:flex-row items-center justify-center gap-6 xs:gap-3 text-xs sm:text-sm text-[#f5f5f7]/60">
           {[
-            { color: "bg-[#222]", label: "Regular days" },
-            { color: "bg-[#A2BFFE]", label: "Weekly milestones" },
-            { color: "bg-emerald-500", label: "Current day" },
+            { color: "bg-[#222]", label: "Regular" },
+            { color: "bg-[#A2BFFE]", label: "Weekly" },
+            { color: "bg-emerald-500", label: "Current" },
           ].map((item, index) => (
             <div key={index} className="flex items-center gap-1">
               <motion.div
