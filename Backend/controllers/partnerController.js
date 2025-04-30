@@ -70,19 +70,24 @@ exports.acceptRequest = async (req, res) => {
       return res.status(404).json({ message: "Partnership request not found" });
     }
 
-    // Verify the current user is the partner
     if (partnership.partner.toString() !== req.user.id) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
+    // Check if chat already exists
+    let chat = await Chat.findOne({
+      participants: { $all: [partnership.user, partnership.partner] },
+    });
+
+    if (!chat) {
+      chat = new Chat({
+        participants: [partnership.user, partnership.partner],
+      });
+      await chat.save();
+    }
+
     partnership.status = "accepted";
     await partnership.save();
-
-    // Create a chat room for the partners
-    const chat = new Chat({
-      participants: [partnership.user, partnership.partner],
-    });
-    await chat.save();
 
     res.json(partnership);
   } catch (error) {
@@ -145,8 +150,6 @@ exports.getPartners = async (req, res) => {
 exports.getChatHistory = async (req, res) => {
   try {
     const { partnerId } = req.params;
-
-    // Find chat between users
     let chat = await Chat.findOne({
       participants: { $all: [req.user.id, partnerId] },
     }).populate({
@@ -155,7 +158,6 @@ exports.getChatHistory = async (req, res) => {
     });
 
     if (!chat) {
-      // Create new chat if it doesn't exist
       chat = new Chat({
         participants: [req.user.id, partnerId],
         messages: [],
@@ -163,7 +165,7 @@ exports.getChatHistory = async (req, res) => {
       await chat.save();
     }
 
-    res.json(chat.messages);
+    res.json({ chatId: chat._id, messages: chat.messages });
   } catch (error) {
     console.error("Error getting chat history:", error);
     res.status(500).json({ message: error.message });

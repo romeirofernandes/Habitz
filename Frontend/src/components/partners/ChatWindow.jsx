@@ -9,6 +9,7 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [typingUsers, setTypingUsers] = useState([]);
+  const [chatMongoId, setChatMongoId] = useState(null);
   const messagesEndRef = useRef(null);
   const currentUser = JSON.parse(localStorage.getItem("user"));
   const socketRef = useRef(null);
@@ -19,20 +20,26 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
   const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
-    // Initialize socket connection
+    if (!chatMongoId) return;
     socketRef.current = io(import.meta.env.VITE_API_URL);
 
-    // Join the chat room
-    socketRef.current.emit("join-chat", chatId);
+    // Join the chat room using the real MongoDB chat _id
+    socketRef.current.emit("join-chat", chatMongoId);
 
-    // Socket event listeners
-    socketRef.current.on("typing-update", (typingUserId) => {
-      setIsTyping(typingUserId === partnerId);
+    socketRef.current.on("typing-update", (typingUsers) => {
+      setTypingUsers(typingUsers || []);
+      setIsTyping(typingUsers?.includes(partnerId));
     });
 
     socketRef.current.on("message-received", (newMessage) => {
       setMessages((prev) => [...prev, newMessage]);
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
+
+    socketRef.current.on("read-receipt-update", ({ messageId, readBy }) => {
+      setMessages((prev) =>
+        prev.map((msg) => (msg._id === messageId ? { ...msg, readBy } : msg))
+      );
     });
 
     // Cleanup on unmount
@@ -41,18 +48,20 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
         socketRef.current.disconnect();
       }
     };
-  }, [chatId, partnerId]);
+  }, [chatMongoId, partnerId]);
 
   const debouncedStopTyping = debounce(() => {
+    if (!chatMongoId) return;
     socketRef.current?.emit("typing-stopped", {
-      chatId,
+      chatId: chatMongoId,
       userId: currentUser.id,
     });
   }, 1000);
 
   const handleTyping = () => {
+    if (!chatMongoId) return;
     socketRef.current?.emit("typing-started", {
-      chatId,
+      chatId: chatMongoId,
       userId: currentUser.id,
     });
     debouncedStopTyping();
@@ -60,7 +69,7 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !chatMongoId) return;
 
     try {
       const response = await axios.post(
@@ -69,7 +78,7 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
         }/api/partners/chat/${partnerId}/messages`,
         {
           content: newMessage,
-          chatId: chatId,
+          chatId: chatMongoId,
         },
         {
           headers: {
@@ -77,19 +86,10 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
           },
         }
       );
-
-      // Add new message to the messages array
-      setMessages((prev) => [...prev, response.data]);
-
-      // Clear input field
       setNewMessage("");
-
-      // Scroll to bottom
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-
-      // Emit socket event for real-time update
       socketRef.current?.emit("new-message", {
-        chatId,
+        chatId: chatMongoId,
         message: response.data,
       });
     } catch (error) {
@@ -98,8 +98,9 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
     }
   };
 
-  // Add this effect to mark messages as read
+  // Mark messages as read
   useEffect(() => {
+    if (!chatMongoId) return;
     if (messages.length > 0) {
       messages.forEach((message) => {
         if (
@@ -107,14 +108,14 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
           !message.readBy?.includes(currentUser.id)
         ) {
           socketRef.current?.emit("message-read", {
-            chatId,
+            chatId: chatMongoId,
             messageId: message._id,
             userId: currentUser.id,
           });
         }
       });
     }
-  }, [messages, currentUser.id, chatId]);
+  }, [messages, currentUser.id, chatMongoId]);
 
   // Update the fetchMessages function
   useEffect(() => {
@@ -128,14 +129,14 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
             },
           }
         );
-        setMessages(response.data || []);
+        setMessages(response.data.messages || []);
+        setChatMongoId(response.data.chatId); // This triggers the socket useEffect above
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       } catch (error) {
         console.error("Failed to fetch messages:", error);
         toast.error("Failed to load messages");
       }
     };
-
     fetchMessages();
   }, [partnerId]);
 
@@ -160,7 +161,15 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div
+          className="flex-1 overflow-y-auto p-4 space-y-4"
+          style={{ minHeight: "300px", maxHeight: "50vh" }}
+        >
+          {messages.length === 0 && (
+            <div className="text-center text-[#f5f5f7]/40 py-12">
+              No messages yet
+            </div>
+          )}
           {messages.map((message, index) => {
             const isCurrentUser = message.sender._id === currentUser.id;
             const messageDate = new Date(message.createdAt);
@@ -171,6 +180,11 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
                     minute: "2-digit",
                   })
                 : "Invalid date";
+
+            const otherParticipantIds = [partnerId];
+            const allOthersRead = otherParticipantIds.every((id) =>
+              message.readBy?.includes(id)
+            );
 
             return (
               <div
@@ -201,7 +215,7 @@ const ChatWindow = ({ partnerId, partnerName, onClose }) => {
                     {formattedTime}
                   </p>
                 </div>
-                {message.readBy?.includes(partnerId) && (
+                {isCurrentUser && allOthersRead && (
                   <span className="text-xs text-[#f5f5f7]/60 mt-1">Seen</span>
                 )}
               </div>
